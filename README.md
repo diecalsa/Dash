@@ -1,1 +1,1 @@
-# Dash
+# Manifold Learning Dashboard
