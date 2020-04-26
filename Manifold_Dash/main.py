@@ -14,56 +14,98 @@ import pandas as pd
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
+app.config.suppress_callback_exceptions=True
 
 app.layout = html.Div([
-    #Header
     html.Div([
-       html.H2(
-           children='Manifold Learning Analytics',
-           style={
-            'text-align':'center'
-        }
-       )
+        #Header
+        html.Div([
+            html.H2(
+                children='Manifold Learning Analytics',
+                style={
+                    'text-align':'center'
+                }
+            )
+        ])
+    ], className='row'),
+
+    html.Div([
+        # Upload file
+        html.Div([
+            dcc.Upload(
+                id='upload-data',
+                children=html.Div([
+                    'Drag and Drop or ',
+                    html.A('Select Files')
+                ]),
+                style={
+                    'width': '100%',
+                    'height': '60px',
+                    'lineHeight': '60px',
+                    'borderWidth': '1px',
+                    'borderStyle': 'dashed',
+                    'borderRadius': '5px',
+                    'textAlign': 'center',
+                    #'margin': '10px'
+                },
+                # Allow multiple files to be uploaded
+                multiple=True
+            ),
+
+            # Hidden Div inside the app that stores the intermediate data
+            html.Div(id='data-storage',
+                     style={
+                         'display':'none'
+                     })
+
+        ])
+    ],className='row'),
+    html.Div([
+        html.Hr()
     ]),
-
-    # Upload file
     html.Div([
-        dcc.Upload(
-            id='upload-data',
-            children=html.Div([
-                'Drag and Drop or ',
-                html.A('Select Files')
-            ]),
-            style={
-                'width': '98%',
-                'height': '60px',
-                'lineHeight': '60px',
-                'borderWidth': '1px',
-                'borderStyle': 'dashed',
-                'borderRadius': '5px',
-                'textAlign': 'center',
-                'margin': '10px'
-            },
-            # Allow multiple files to be uploaded
-            multiple=True
-        ),
+        html.Div([
+            dash_table.DataTable(
+                id='data-table',
+                fixed_rows={'headers': True},
+                style_table={'overflowX': 'scroll',
+                             'maxHeight': '350px',
+                             'overflowY': 'scroll',
+                             'width':'100%'
+                             },
+                style_cell={
+                    'minWidth': '100px',
+                    'text-align': 'center',
+                    'width': '30%'
+                }
+            ),
 
-        # Hidden Div inside the app that stores the intermediate data
-        html.Div(id='data-storage',
+            html.Hr(id='hr2'),  # horizontal line
+        ])
+    ],className='row'),
+    html.Div([
+        html.Div([
+            dcc.Dropdown(
+                id='dropDown',
+                style={
+                    'width': '100%',
+                    'margin': '5px'
+                },
+                value=[],
+                multi=True
+            )
+        ],id='dd'),
+
+        html.Div(id='filtered-data-storage',
                  style={
                      'display':'none'
-                 }),
-        html.Div(id='display-data-table')
+                 })
+    ],className='row'),
 
-    ]),
-    html.Div([
-
-    ]),
-
+    html.Div(id='data-table2')
 ])
 
-
+# ----------- FUNCIONES ----------------
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
 
@@ -83,10 +125,11 @@ def parse_contents(contents, filename, date):
     except Exception as e:
         print(e)
     columns = [{'name': i, 'id': i} for i in df.columns]
-    print(df.head())
     return df.to_json(date_format='iso',orient = 'split')
+# -----------------------------------------
 
 
+# Upload data and store in data-storage
 @app.callback(Output('data-storage', 'children'),
               [Input('upload-data', 'contents')],
               [State('upload-data', 'filename'),
@@ -96,45 +139,87 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         df = [
             parse_contents(c, n, d) for c, n, d in
             zip(list_of_contents, list_of_names, list_of_dates)]
+        print("1. Datos cargados")
+        print(df)
         return df
 
-@app.callback(Output('display-data-table','children'),
+# Update data table and dropdown
+@app.callback([Output('data-table','data'),
+               Output('data-table','columns'),
+               Output('dropDown','options'),
+               Output('dropDown','value')],
               [Input('data-storage','children')])
 def update_data_table(input_data):
+    data = []
+    columns = []
+    options = []
+    value = []
     if input_data is not None:
-        print(input_data)
         dff = pd.read_json(input_data[0],orient='split')
-        return html.Div([
-            dash_table.DataTable(
-                data=dff.to_dict('records'),
-                columns=[{'name': i, 'id': i} for i in dff.columns],
-                style_table={'overflowX': 'scroll',
-                             'maxHeight': '350px',
-                             'overflowY': 'scroll'
+        data = dff.to_dict('records')
+        columns = [{'name': i, 'id': i} for i in dff.columns]
+        options = [{'label': i, 'value': i} for i in dff.columns]
+        #value = dff.columns[0]
+        print("2. Mostrar datos en tabla")
+        print(dff.head())
+    return data, \
+           columns, \
+           options, \
+           value
 
-                             },
-                style_cell={
-                    'minWidth': '100px',
-                    'text-align': 'center',
-                    'width': '30%'
-                }
-            ),
+# Select columns and store in filtered-data-storage
+@app.callback(Output('filtered-data-storage','children'),
+              [Input('data-storage','children'),
+               Input('dropDown','value')])
+def filter_data(input_data,columns):
+    if input_data is not None and len(columns)>0:
+        dff = pd.read_json(input_data[0],orient='split')
+        print("3. Filtramos la tabla")
+        print(dff.head())
+        print(columns)
+        dff = dff[columns]
+        print(dff.head())
+        return dff.to_json(date_format='iso',orient = 'split')
+    else:
+        return []
 
-            html.Hr(),  # horizontal line
+# Update filtered data table
+@app.callback(Output('data-table2','children'),
+              [Input('filtered-data-storage','children'),
+               Input('dropDown','value')])
+def update_filtered_data(input_data, cols):
+    print("4. Cargar datos filtrados a tabla")
+    if input_data is not None:
+        try:
+            dff = pd.read_json(input_data,orient='split')
+            print(dff.head())
+            return html.Div([
 
-            dcc.Dropdown(
-                id='dd_variables',
-                style={
-                    'width': '99%',
-                    'margin': '5px'
-                },
-                options=[{'label': i, 'value': i} for i in dff.keys()],
-                value=dff.columns[0:2],
-                multi=True
-            )
-        ])
+                dash_table.DataTable(
+                    id='data-table3',
+                    data = dff.to_dict('records'),
+                    columns = [{'name': i, 'id': i} for i in dff.columns],
+                    style_table={'overflowX': 'scroll',
+                                 'maxHeight': '350px',
+                                 'overflowY': 'scroll',
+                                 'width':'100%'
+
+                                 },
+                    style_cell={
+                        'minWidth': '100px',
+                        'text-align': 'center',
+                        'width': '30%'
+                    }
+                ),
+                html.Hr(id='hr2')  # horizontal line
+            ])
+        except:
+            return html.Div([])
+    else:
+        return html.Div([])
 
 
 
+#
 if __name__ == '__main__':
     app.run_server(debug=True)
