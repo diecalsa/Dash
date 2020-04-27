@@ -16,6 +16,7 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.config.suppress_callback_exceptions=True
 
+
 app.layout = html.Div([
     html.Div([
         #Header
@@ -63,26 +64,7 @@ app.layout = html.Div([
     html.Div([
         html.Hr()
     ]),
-    html.Div([
-        html.Div([
-            dash_table.DataTable(
-                id='data-table',
-                fixed_rows={'headers': True},
-                style_table={'overflowX': 'scroll',
-                             'maxHeight': '350px',
-                             'overflowY': 'scroll',
-                             'width':'100%'
-                             },
-                style_cell={
-                    'minWidth': '100px',
-                    'text-align': 'center',
-                    'width': '30%'
-                }
-            ),
 
-            html.Hr(id='hr2'),  # horizontal line
-        ])
-    ],className='row'),
     html.Div([
         html.Div([
             dcc.Dropdown(
@@ -95,7 +77,7 @@ app.layout = html.Div([
                 multi=True
             )
         ],id='dd'),
-
+        html.Hr(),
         html.Div(id='filtered-data-storage',
                  style={
                      'display':'none'
@@ -139,14 +121,12 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         df = [
             parse_contents(c, n, d) for c, n, d in
             zip(list_of_contents, list_of_names, list_of_dates)]
-        print("1. Datos cargados")
-        print(df)
+        #print("1. Datos cargados")
+        #print(df)
         return df
 
 # Update data table and dropdown
-@app.callback([Output('data-table','data'),
-               Output('data-table','columns'),
-               Output('dropDown','options'),
+@app.callback([Output('dropDown','options'),
                Output('dropDown','value')],
               [Input('data-storage','children')])
 def update_data_table(input_data):
@@ -159,13 +139,10 @@ def update_data_table(input_data):
         data = dff.to_dict('records')
         columns = [{'name': i, 'id': i} for i in dff.columns]
         options = [{'label': i, 'value': i} for i in dff.columns]
-        #value = dff.columns[0]
-        print("2. Mostrar datos en tabla")
-        print(dff.head())
-    return data, \
-           columns, \
-           options, \
-           value
+        value = dff.columns
+        #print("2. Mostrar datos en tabla")
+        #print(dff.head())
+    return options, value
 
 # Select columns and store in filtered-data-storage
 @app.callback(Output('filtered-data-storage','children'),
@@ -174,11 +151,11 @@ def update_data_table(input_data):
 def filter_data(input_data,columns):
     if input_data is not None and len(columns)>0:
         dff = pd.read_json(input_data[0],orient='split')
-        print("3. Filtramos la tabla")
-        print(dff.head())
-        print(columns)
+        #print("3. Filtramos la tabla")
+        #print(dff.head())
+        #print(columns)
         dff = dff[columns]
-        print(dff.head())
+        #print(dff.head())
         return dff.to_json(date_format='iso',orient = 'split')
     else:
         return []
@@ -188,11 +165,11 @@ def filter_data(input_data,columns):
               [Input('filtered-data-storage','children'),
                Input('dropDown','value')])
 def update_filtered_data(input_data, cols):
-    print("4. Cargar datos filtrados a tabla")
+    #print("4. Cargar datos filtrados a tabla")
     if input_data is not None:
         try:
             dff = pd.read_json(input_data,orient='split')
-            print(dff.head())
+            #print(dff.head())
             return html.Div([
 
                 dash_table.DataTable(
@@ -222,4 +199,4 @@ def update_filtered_data(input_data, cols):
 
 #
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
