@@ -27,12 +27,6 @@ app.layout = html.Div([
                 style={
                     'text-align':'center'
                 }
-            ),
-            html.H4(
-                children='1. Upload a dataset in *.csv format',
-                style={
-                    'text-align':'left'
-                }
             )
         ])
     ], className='row'),
@@ -73,20 +67,12 @@ app.layout = html.Div([
     ]),
 
     html.Div([
-       html.H5(
-           children='2. Select variables from the dataset to apply dimensionality reduction (manifold)',
-           style={
-               'text-align':'left'
-           }
-       )
-    ]),
-    html.Div([
         html.Div([
             dcc.Dropdown(
                 id='dropDown',
                 style={
                     'width': '100%',
-                    'margin': '0px'
+                    'margin': '5px'
                 },
                 value=[],
                 multi=True
@@ -98,18 +84,7 @@ app.layout = html.Div([
                      'display':'none'
                  })
     ],className='row'),
-
-    html.Div(id='data-table2'),
-
-    html.Div([
-        html.H5(
-            children='3. Select manifold and its output dimensionality',
-            style={
-                'text-align':'left'
-            }
-        )
-    ]),
-
+    
     html.Div([
         html.Div([
             dcc.Slider(
@@ -119,18 +94,22 @@ app.layout = html.Div([
                 value=2,
                 marks={1:'1'}
             )
-        ],className='nine columns'),
-
+        ]),
         html.Div([
-            daq.NumericInput(
-                id='numericInput',
-                value = 1,
-                min = 1,
-                max = 1
+            dcc.Dropdown(
+                id='dropDownManifolds',
+                style={
+                    'width': '100%',
+                    'margin': '5px'
+                },
+                searchable=False,
+                multi=True
             )
-        ],className='three columns')
+        ],id='dd2'),
+        html.Hr(),
+    ],className='row'),
 
-    ])
+    html.Div(id='data-table2')
 ])
 
 # ----------- FUNCIONES ----------------
@@ -186,6 +165,8 @@ def update_data_table(input_data):
         columns = [{'name': i, 'id': i} for i in dff.columns]
         options = [{'label': i, 'value': i} for i in dff.columns]
         value = dff.columns
+        val = len(options)
+        
         #print("2. Mostrar datos en tabla")
         #print(dff.head())
     return options, value
@@ -195,12 +176,14 @@ def update_data_table(input_data):
               [Input('data-storage','children'),
                Input('dropDown','value')])
 def filter_data(input_data,columns):
+
     if input_data is not None and len(columns)>0:
         dff = pd.read_json(input_data[0],orient='split')
         #print("3. Filtramos la tabla")
         #print(dff.head())
         #print(columns)
         dff = dff[columns]
+        # val = len(dff)
         #print(dff.head())
         return dff.to_json(date_format='iso',orient = 'split')
     else:
@@ -215,7 +198,9 @@ def update_filtered_data(input_data, cols):
     if input_data is not None:
         try:
             dff = pd.read_json(input_data,orient='split')
-            #print(dff.head())
+            vals = len(dff.columns)
+            print(vals)
+            print(dff.head())
             return html.Div([
 
                 dash_table.DataTable(
@@ -240,10 +225,11 @@ def update_filtered_data(input_data, cols):
             return html.Div([])
     else:
         return html.Div([])
+    
+# Update numberOfFeatures
 
 @app.callback([Output('numberOfFeatures','max'),
-               Output('numberOfFeatures','marks'),
-               Output('numericInput','max')],
+               Output('numberOfFeatures','marks')],
               [Input('filtered-data-storage','children')])
 def update_output_features2(input_data):
     if input_data is not None:
@@ -251,32 +237,15 @@ def update_output_features2(input_data):
 
             dff = pd.read_json(input_data,orient='split')
             max = len(dff.columns)
-            steps = int(round(max/10,-1))
-            #steps = 1
+            #steps = int(round(max/10,-1))
+            steps = 1
             marks = {i:'{}'.format(i) for i in range(0,max,steps)}
             print("update features 2")
             print(marks)
 
-            return  max, marks, max
+            return  max, marks
         except:
-            return 1,{1:'1'},1
+            return 1,{1:'1'}
 
-@app.callback(Output('numericInput','value'),
-              [Input('numberOfFeatures','value')])
-def update_values(input_value):
-    if(input_value is not None):
-        return input_value
-    else:
-        return 1
-
-@app.callback(Output('numberOfFeatures','value'),
-              [Input('numericInput','value')])
-def update_values(input_value):
-    if(input_value is not None):
-        return input_value
-    else:
-        return 1
-
-#
 if __name__ == '__main__':
     app.run_server(debug=True)
