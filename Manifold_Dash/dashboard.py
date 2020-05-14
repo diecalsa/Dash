@@ -15,7 +15,9 @@ import pandas as pd
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.preprocessing import StandardScaler
-from sklearn.manifold import Isomap, LocallyLinearEmbedding, TSNE
+from sklearn.manifold import Isomap, LocallyLinearEmbedding, TSNE, MDS
+
+print("Version",dash.__version__)
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -165,8 +167,7 @@ app.layout = html.Div([
                     {'label': 'Isometric Mapping', 'value': 'IsoMAP'},
                     {'label': 'Linear Locally Embedding', 'value': 'LLE'},
                     {'label': 'Kernel PCA', 'value': 'KPCA'},
-                    {'label': 't-distributed Stochastic Neighbor Embedding', 'value': 't-SNE'},
-                    {'label': 'Uniform Manifold Approximation and Projection', 'value': 'UMAP'}
+                    {'label': 't-distributed Stochastic Neighbor Embedding', 'value': 't-SNE'}
                 ],
             )
         ],className='four columns'),
@@ -220,7 +221,7 @@ app.layout = html.Div([
                     'text-align':'center'
                 }
             )
-        ],className='three columns'),
+        ],className='six columns'),
 
         html.Div([
             html.Hgroup(
@@ -229,7 +230,7 @@ app.layout = html.Div([
                     'text-align':'center'
                 }
             )
-        ],className='three columns')
+        ],className='six columns')
 
     ],className='row'),
 
@@ -238,13 +239,13 @@ app.layout = html.Div([
             dcc.Dropdown(
                 id = 'dropdownDimension1'
             )
-        ],className='three columns'),
+        ],className='six columns'),
 
         html.Div([
             dcc.Dropdown(
                 id = 'dropdownDimension2'
             )
-        ],className='three columns'),
+        ],className='six columns'),
     ], className='row'),
 
     html.Div(id='manifold-data-storage',
@@ -253,12 +254,15 @@ app.layout = html.Div([
              }
     ),
     html.Div(id='graphHeader'),
-    html.Div(id='graph')
+
+    html.Div(id='manifold-graph')
+
 
 ])
 
 # ----------- FUNCIONES ----------------
 def parse_contents(contents, filename, date):
+
     content_type, content_string = contents.split(',')
 
     decoded = base64.b64decode(content_string)
@@ -280,58 +284,61 @@ def parse_contents(contents, filename, date):
     return df.to_json(date_format='iso',orient = 'split')
 
 def apply_manifold(data, algorithm = 'PCA', ncomponents = 3):
+    max_iter = 100
+    n_neighbors = 10
+
     if(data is not None):
         scaler = StandardScaler()
         scaled_data = scaler.fit_transform(data)
         df_scaled_data = pd.DataFrame(data=scaled_data,columns=data.columns)
 
         if(algorithm == 'PCA'):
-            pca = PCA(n_components=ncomponents)
-            principalComponents = pca.fit_transform(df_scaled_data)
+            manifold = PCA(n_components=ncomponents)
+            principalComponents = manifold.fit_transform(df_scaled_data)
             principalDf = pd.DataFrame(data = principalComponents
-                                       , columns = ['principal component {}'.format(i) for i in range(ncomponents)])
+                                       , columns = ['Principal component {}'.format(i) for i in range(ncomponents)])
             return principalDf
 
         elif(algorithm == 'MDS'):
-            pca = PCA(n_components=ncomponents)
-            principalComponents = pca.fit_transform(df_scaled_data)
+            manifold = MDS(n_components=ncomponents, max_iter=max_iter, n_init=1)
+            principalComponents = manifold.fit_transform(df_scaled_data)
             principalDf = pd.DataFrame(data = principalComponents
-                                       , columns = ['principal component {}'.format(i) for i in range(ncomponents)])
+                                       , columns = ['Principal component {}'.format(i) for i in range(ncomponents)])
             return principalDf
 
         elif(algorithm == 'IsoMAP'):
-            pca = PCA(n_components=ncomponents)
-            principalComponents = pca.fit_transform(df_scaled_data)
+            manifold = Isomap(n_components=ncomponents, n_neighbors=n_neighbors)
+            principalComponents = manifold.fit_transform(df_scaled_data)
             principalDf = pd.DataFrame(data = principalComponents
-                                       , columns = ['principal component {}'.format(i) for i in range(ncomponents)])
+                                       , columns = ['Principal component {}'.format(i) for i in range(ncomponents)])
             return principalDf
 
         elif(algorithm == 'LLE'):
-            pca = PCA(n_components=ncomponents)
-            principalComponents = pca.fit_transform(df_scaled_data)
+            manifold = LocallyLinearEmbedding(n_components=ncomponents)
+            principalComponents = manifold.fit_transform(df_scaled_data)
             principalDf = pd.DataFrame(data = principalComponents
-                                       , columns = ['principal component {}'.format(i) for i in range(ncomponents)])
+                                       , columns = ['Principal component {}'.format(i) for i in range(ncomponents)])
             return principalDf
 
         elif(algorithm == 'KPCA'):
-            pca = PCA(n_components=ncomponents)
-            principalComponents = pca.fit_transform(df_scaled_data)
+            manifold = KernelPCA(n_components=ncomponents)
+            principalComponents = manifold.fit_transform(df_scaled_data)
             principalDf = pd.DataFrame(data = principalComponents
-                                       , columns = ['principal component {}'.format(i) for i in range(ncomponents)])
+                                       , columns = ['Principal component {}'.format(i) for i in range(ncomponents)])
             return principalDf
 
         elif(algorithm == 't-SNE'):
-            pca = PCA(n_components=ncomponents)
-            principalComponents = pca.fit_transform(df_scaled_data)
+            manifold = TSNE(n_components=ncomponents, init='pca', random_state=0)
+            principalComponents = manifold.fit_transform(df_scaled_data)
             principalDf = pd.DataFrame(data = principalComponents
-                                       , columns = ['principal component {}'.format(i) for i in range(ncomponents)])
+                                       , columns = ['Principal component {}'.format(i) for i in range(ncomponents)])
             return principalDf
 
         elif(algorithm == 'UMAP'):
-            pca = PCA(n_components=ncomponents)
-            principalComponents = pca.fit_transform(df_scaled_data)
+            manifold = PCA(n_components=ncomponents)
+            principalComponents = manifold.fit_transform(df_scaled_data)
             principalDf = pd.DataFrame(data = principalComponents
-                                       , columns = ['principal component {}'.format(i) for i in range(ncomponents)])
+                                       , columns = ['Principal component {}'.format(i) for i in range(ncomponents)])
             return principalDf
 
         else:
@@ -480,23 +487,45 @@ def update_dimensionSelection(input_data):
     else:
         return [{'label':'Dimension 0', 'value':0}],[{'label':'Dimension 0', 'value':0}]
 
-@app.callback(Output('graph','children'),
+@app.callback(Output('manifold-graph','children'),
               [Input('manifold-data-storage','children'),
                Input('dropdownDimension1','value'),
                Input('dropdownDimension2','value')])
 def update_graph(input_data, dim1, dim2):
     if input_data is not None:
         try:
-            print('update graph')
             dff = pd.read_json(input_data,orient='split')
             if(dim1 is not None and dim2 is not None):
-                fig = px.scatter(dff,x=dim1,y=dim2)
-                return html.Div([
-                    dcc.Graph(
-                        figure=fig
-                    )
-                ],className='row')
+                print("Update figure")
+
+                return dcc.Graph(
+                    figure = {
+                        'data': [dict(
+                            x=dff[dim1].values,
+                            y=dff[dim2].values,
+                            mode='markers',
+                            marker={
+                                'size': 15,
+                                'opacity': 0.5,
+                                'line': {'width': 0.5, 'color': 'white'}
+                            }
+                        )],
+                        'layout': dict(
+                            xaxis={
+                                'title': dim1,
+                                'type': 'linear'
+                            },
+                            yaxis={
+                                'title': dim2,
+                                'type': 'linear'
+                            },
+                            margin={'l': 40, 'b': 40, 't': 10, 'r': 0},
+                            hovermode='closest'
+                        )
+                    }
+                )
         except:
+
             return html.Div([])
 
 @app.callback(Output('manifold-data-storage', 'children'),
@@ -510,7 +539,6 @@ def update_output_div(n_clicks, input_data, manifold, ncomponents):
             print('Your have clicked {} times and entered {} manifold algorithm and {} dimensions'.format(n_clicks,manifold,ncomponents))
             dff = pd.read_json(input_data,orient='split')
             principalDf = apply_manifold(dff,manifold,ncomponents)
-            print(principalDf.head())
             return principalDf.to_json(date_format='iso',orient = 'split')
     except:
         a = 1
