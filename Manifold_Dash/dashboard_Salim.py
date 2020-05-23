@@ -272,7 +272,25 @@ app.layout = html.Div([
 
     html.Div(id='manifold-graph'),
 
-    html.Div(id='manifold-graph3D')
+    html.Div(id='manifold-graph3D'), 
+     html.Div([
+        html.Hr(),
+        html.Button(
+            children='3D',
+            id='runButton2',
+            n_clicks=0
+        ),
+     html.Div([
+        html.Hr(),
+        html.Button(
+            children='2D',
+            id='runButton3',
+            n_clicks=0
+        ),
+         
+
+        html.Hr()
+    ], className='row'),
         
 
 
@@ -586,24 +604,44 @@ def pca_varianze (input_data):
         )
      ])
 
-@app.callback(Output('manifold-graph3D','children'),
+@app.callback([Output('manifold-graph3D','children'),
+              Output('graphPCA','children')],
               [Input('manifold-data-storage','children'),
+               Input('runButton2', 'n_clicks'),
+               Input('runButton3', 'n_clicks'),
                Input('dropdownDimension1','value'),
                Input('dropdownDimension2','value'),
                Input('dropdownDimension3','value')])
-def update_graph(input_data, dim1, dim2, dim3):
+def update_graph(input_data, n_clicks, n_clicks2, dim1, dim2, dim3):
     if input_data is not None:
         try:
             dff = pd.read_json(input_data,orient='split')
             if(dim1 is not None and dim2 is not None and dim3 is not None):
-                print("Update 3D figure")
-                x=dim1
-                y=dim2
-                z=dim3
-                fig= px.scatter_3d(dff, x,y,z, size_max=18, opacity=0.7, width = 1000, height = 1000)
-                return dcc.Graph(
-                    figure = fig
-                )
+                if n_clicks:
+                    print("Update 3D figure")
+                    x=dim1
+                    y=dim2
+                    z=dim3
+                    fig= px.scatter_3d(dff, x,y,z, size_max=18, opacity=0.7, width = 1000, height = 1000)
+                    return dcc.Graph(
+                        figure = fig
+                    )
+    
+                elif n_clicks2:
+                     dff = pd.read_json(input_data[0],orient='split')
+                     pca = PCA()
+                     df_pca = pca.fit_transform(dff)
+                     x = [i+1 for i in range(len(pca))]
+                     y = np.cumsum(pca.explained_variance_ratio_)
+                     print("X:",x)
+                     print("Y",y)
+                     fig = go.Figure(data=[go.Scatter(x= [i+1 for i in range(len(dff.columns))], y=np.cumsum(pca.explained_variance_ratio_))])
+                     return html.Div([
+                        dcc.Graph(
+                          figure=fig
+                        )
+                     ])
+
         except:
             return html.Div([])
 
