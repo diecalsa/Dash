@@ -38,8 +38,10 @@ cache = Cache(app.server, config={
     'CACHE_DIR':'cache-directory'
 })
 
-df = px.data.iris() # iris is a pandas DataFrame
-df = df.select_dtypes(['number'])
+df_c = px.data.iris() # iris is a pandas DataFrame
+df = df_c.select_dtypes(['number'])
+options_c = [{'label': i, 'value': i} for i in df_c.columns]
+value_c = df_c.columns[0]
 options = [{'label': i, 'value': i} for i in df.columns]
 value = df.columns
 max = len(df.columns)
@@ -52,7 +54,7 @@ SIDEBAR_STYLE = {
     "bottom": 0,
     "width": "40%",
     "padding": "2rem 1rem",
-    "background-color": "#f8f9fa",
+    "background-color": "#F8F8F8",
     "overflow-y":"scroll"
 }
 
@@ -323,6 +325,10 @@ sidebar = html.Div(
             collapse,
             # Hidden Div inside the app that stores the intermediate data
             html.Div([
+                dcc.Store(id='complete-data-storage',
+                          data=df_c.to_json(date_format='iso',orient = 'split'))
+            ]),
+            html.Div([
                 dcc.Store(id='data-storage',
                           data=df.to_json(date_format='iso',orient = 'split'))
             ]),
@@ -335,6 +341,7 @@ sidebar = html.Div(
                   id='manifold-data-storage'
               )
             ]),
+
             html.Div(id='prueba'),
             #html.Div(id='data-storage',
             #         style={
@@ -375,6 +382,7 @@ content = html.Div(id="page-content",
                    style=CONTENT_STYLE,
                    children=[
                        html.Div([
+
                            html.P('Select graphic dimension:'),
                            html.P('2D',
                                   style={'margin-left':'15px'}),
@@ -383,6 +391,19 @@ content = html.Div(id="page-content",
                                value=True
                            ),
                            html.P('3D'),
+                           html.P('Colorize by:',
+                                  style={'margin-left':'30px'}),
+                           html.Div([
+                               dcc.Dropdown(
+                                   id='color_label',
+                               )
+                           ],style={
+                               'width':'30%',
+                               'margin-left':'15px'
+                           })
+
+
+
                        ], className='row'),
                        html.Div([
                            html.Div([
@@ -473,11 +494,8 @@ def parse_contents(contents, filename):
         print(e)
     columns = [{'name': i, 'id': i} for i in dff.columns]
 
-    # Get only numeric variables
-    dff = dff.select_dtypes(['number'])
-    dff = dff.dropna()
     #print(dff)
-    return dff.to_json(date_format='iso',orient = 'split')
+    return dff
 
 def apply_manifold(data, algorithm = 'PCA', ncomponents = 3, max_iter=100, n_neighbors=10, n_init=1):
 
@@ -543,7 +561,8 @@ def apply_manifold(data, algorithm = 'PCA', ncomponents = 3, max_iter=100, n_nei
 
 
 # Upload data and store in data-storage
-@app.callback(Output('data-storage', 'data'),
+@app.callback([Output('data-storage', 'data'),
+               Output('complete-data-storage','data')],
               [Input('upload-data', 'contents')],
               [State('upload-data', 'filename'),
                State('upload-data', 'last_modified')])
@@ -554,7 +573,14 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         dff = parse_contents(list_of_contents, list_of_names)
         #print("1. Datos cargados")
         #print(dff)
-        return dff
+        # Get only numeric variables
+
+        dff_numeric = dff.select_dtypes(['number'])
+        dff_numeric = dff_numeric.dropna()
+
+        return dff_numeric.to_json(date_format='iso',orient = 'split'), dff.to_json(date_format='iso',orient = 'split')
+    else:
+        return df.to_json(date_format='iso',orient = 'split'), df_c.to_json(date_format='iso',orient = 'split')
 
 # Update data table and dropdown
 @app.callback([Output('dropDown','options'),
@@ -653,9 +679,11 @@ def update_max_dimensions(input_data):
 @app.callback([Output('manifold-data-storage', 'data'),
                Output('dropdownDimension1','options'),
                Output('dropdownDimension2','options'),
-               Output('dropdownDimension3','options')],
+               Output('dropdownDimension3','options'),
+               Output('color_label','options')],
               [Input('Run_Button','n_clicks')],
               [State('filtered-data-storage','data'),
+               State('complete-data-storage','data'),
                State('PCA_NDimensions','value'),
                State('MDS_NDimensions','value'),
                State('isomap_NDimensions','value'),
@@ -666,7 +694,7 @@ def update_max_dimensions(input_data):
                State('MDS_iterations','value'),
                State('MDS_initializations','value'),
                State('isomap_nneighbors','value')])
-def update_output_div(run_click, input_data, PCAncomponents, MDSncomponents, isomapncomponents, LLEncomponents, KPCAncomponents, tSNEncomponents, activeTab, max_iterations, n_init, n_neighbors):
+def update_output_div(run_click, input_data,complete_input_data, PCAncomponents, MDSncomponents, isomapncomponents, LLEncomponents, KPCAncomponents, tSNEncomponents, activeTab, max_iterations, n_init, n_neighbors):
     try:
         print('RUN')
         if(input_data is not None and run_click is not None):
@@ -685,10 +713,12 @@ def update_output_div(run_click, input_data, PCAncomponents, MDSncomponents, iso
 
             print('Your have clicked {} times and entered {} manifold algorithm and {} dimensions'.format(run_click,activeTab,ncomponents))
             dff = pd.read_json(input_data,orient='split')
+            dff_c = pd.read_json(complete_input_data,orient='split')
             principalDf = apply_manifold(dff,algorithm=activeTab,ncomponents=ncomponents, max_iter=max_iterations, n_neighbors=n_neighbors, n_init=n_init)
             print(principalDf.head())
             options = [{'label': i, 'value': i} for i in principalDf.columns]
-            return principalDf.to_json(date_format='iso',orient = 'split'), options, options, options
+            options_c = [{'label': i, 'value': i} for i in dff_c.columns]
+            return principalDf.to_json(date_format='iso',orient = 'split'), options, options, options, options_c
         else:
             if(activeTab=='PCA'):
                 ncomponents = PCAncomponents
@@ -706,30 +736,41 @@ def update_output_div(run_click, input_data, PCAncomponents, MDSncomponents, iso
             principalDf = apply_manifold(df, algorithm=activeTab, ncomponents=ncomponents, max_iter=300, n_neighbors=10, n_init=1)
             print(principalDf.head())
             options = [{'label': i, 'value': i} for i in principalDf.columns]
-            return principalDf.to_json(date_format='iso', orient='split'), options, options, options
+            options_c = [{'label': i, 'value': i} for i in df_c.columns]
+            return principalDf.to_json(date_format='iso', orient='split'), options, options, options, options_c
     except:
         principalDf = apply_manifold(df, algorithm=activeTab, ncomponents=ncomponents, max_iter=300, n_neighbors=10, n_init=1)
         print(principalDf.head())
         options = [{'label': i, 'value': i} for i in principalDf.columns]
-        return principalDf.to_json(date_format='iso', orient='split'), options, options, options
+        options_c = [{'label': i, 'value': i} for i in df_c.columns]
+        return principalDf.to_json(date_format='iso', orient='split'), options, options, options, options_c
 
 @app.callback([Output('dropdownDimension3','disabled'),
                Output('manifold-graph','children')],
               [Input('manifold-data-storage','data'),
+               Input('complete-data-storage','data'),
                Input('dropdownDimension1','value'),
                Input('dropdownDimension2','value'),
                Input('dropdownDimension3','value'),
-               Input('graphSwitch','value')])
-def update_graph(input_data, dim1, dim2,dim3, graph3d):
+               Input('graphSwitch','value'),
+               Input('color_label','value')])
+def update_graph(input_data,complete_input_data, dim1, dim2,dim3, graph3d, color_label):
     if input_data is not None:
         try:
             dff = pd.read_json(input_data,orient='split')
+            dff_c = pd.read_json(complete_input_data,orient='split')
             if(graph3d):
                 if(dim1 is not None and dim2 is not None and dim3 is not None):
                     x = dff[dim1].values
                     y = dff[dim2].values
                     z = dff[dim3].values
-                    fig = px.scatter_3d(dff, x=x, y=y, z=z, labels={'x':dim1,'y':dim2,'z':dim3} ,height=500,opacity=0.7)
+                    if(color_label is not None):
+                        dff['label']=dff_c[color_label]
+                        label = 'label'
+                    else:
+                        label = None
+                        
+                    fig = px.scatter_3d(dff, x=x, y=y, z=z, labels={'x':dim1,'y':dim2,'z':dim3} ,height=500,opacity=0.7,color=label)
                     fig.update_layout(
                         margin=dict(l=0, r=0, t=20, b=20),
                     )
