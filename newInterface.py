@@ -513,8 +513,9 @@ def parse_contents(contents, filename):
     except Exception as e:
         print(e)
     columns = [{'name': i, 'id': i} for i in dff.columns]
-
-    #print(dff)
+    print(dff.shape)
+    dff = dff.dropna(axis=0)
+    dff = dff.reset_index(drop=True)
     return dff
 
 def apply_manifold(data, algorithm = 'PCA', ncomponents = 3, max_iter=100, n_neighbors=10, n_init=1):
@@ -594,10 +595,9 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         #print("1. Datos cargados")
         #print(dff)
         # Get only numeric variables
-
         dff_numeric = dff.select_dtypes(['number'])
-        dff_numeric = dff_numeric.dropna()
-
+        print(dff.shape)
+        print(dff_numeric.shape)
         return dff_numeric.to_json(date_format='iso',orient = 'split'), dff.to_json(date_format='iso',orient = 'split')
     else:
         return df.to_json(date_format='iso',orient = 'split'), df_c.to_json(date_format='iso',orient = 'split')
@@ -781,6 +781,8 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, complete_inp
             dff_c = pd.read_json(complete_input_data,orient='split')
 
             if(color_label in dff_c.columns):
+                print(dff.head())
+                print(dff_c.head())
                 dff['label']=dff_c[color_label]
                 label = 'label'
             else:
