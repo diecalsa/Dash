@@ -794,18 +794,22 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, complete_inp
                     y = dff[dim2].values
                     z = dff[dim3].values
 
-                    fig = px.scatter_3d(dff, x=x, y=y, z=z, labels={'x':dim1,'y':dim2,'z':dim3} ,height=500,opacity=0.7,color=label)
+                    fig = px.scatter_3d(dff, x=x, y=y, z=z, labels={'x':dim1,'y':dim2,'z':dim3} ,opacity=0.7,color=label, template='plotly')
                     fig.update_layout(
                         margin=dict(l=0, r=0, t=0, b=0),
+                        plot_bgcolor='rgba(0,0,0,0)',
                     )
 
                     return False, html.Div([
                         dcc.Graph(
-                            figure=fig
+                            figure=fig,
+                            style={
+                                'height':'70vh'
+                            }
                         )
                     ],style={
                         'margin-top':'15px',
-                        'zIndex':1
+                        'zIndex':1,
                     })
                 else:
                     return False, html.Div(
@@ -814,7 +818,8 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, complete_inp
                             )
                         ], style={
                             'margin-top': '15px',
-                            'zIndex': 900
+                            'zIndex': 900,
+                            'height':'70vh'
                         })
             else:
                 if(dim1 is not None and dim2 is not None):
@@ -823,8 +828,13 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, complete_inp
                     y = dff[dim2].values
                     size=[7 for i in x]
                     fig = px.scatter(dff, x=x, y=y,labels={'x':dim1,'y':dim2}, color=label, opacity=0.7, size = size)
+                    #fig.update_xaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
+                    #fig.update_yaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
+                    fig.update_xaxes(showline=True, linewidth = 1, linecolor='black')
+                    fig.update_yaxes(showline=True, linewidth = 1, linecolor='black')
                     fig.update_layout(
                         margin=dict(l=0, r=0, t=0, b=0),
+                        plot_bgcolor='rgba(0,0,0,0)'
                     )
                     return True, html.Div(
                         [
@@ -832,7 +842,8 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, complete_inp
                                 figure = fig
                             )],style={
                             'margin-top':'15px',
-                            'zIndex':900
+                            'zIndex':900,
+                            'height':'70vh'
                                 }
                     )
                 else:
@@ -841,7 +852,8 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, complete_inp
                             dcc.Graph()
                         ], style={
                             'margin-top': '15px',
-                            'zIndex': 900
+                            'zIndex': 900,
+                            'height':'70vh'
                         })
         except:
             print("Update figure exception")
@@ -849,8 +861,11 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, complete_inp
             y = df[dim2].values
             size=[7 for i in x]
             fig = px.scatter(df, x=x, y=y, labels={'x':dim1,'y':dim2}, color=label,size=size, opacity=0.7)
+            fig.update_xaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
+            fig.update_yaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
             fig.update_layout(
                 margin=dict(l=0, r=0, t=0, b=0),
+                plot_bgcolor='rgba(0,0,0,255)'
             )
             return True, html.Div(
                 [
@@ -858,7 +873,8 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, complete_inp
                         figure = fig
                     )],style={
                     'margin-top':'15px',
-                    'zIndex':900
+                    'zIndex':900,
+                    'height':'70vh'
                 }
             )
 
