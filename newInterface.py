@@ -42,8 +42,7 @@ df = px.data.iris() # iris is a pandas DataFrame
 df = df.select_dtypes(['number'])
 options = [{'label': i, 'value': i} for i in df.columns]
 value = df.columns
-fig = px.scatter(df, x="sepal_width", y="sepal_length")
-
+max = len(df.columns)
 
 # the style arguments for the sidebar. We use position:fixed and a fixed width
 SIDEBAR_STYLE = {
@@ -128,7 +127,7 @@ tab_PCA = dbc.Card([
                     id='PCA_NDimensions',
                     value = 3,
                     min = 1,
-                    max = 20,
+                    max = max,
                     style={'margin-left':'15px'}
                 )
 
@@ -143,15 +142,45 @@ tab_MDS = dbc.Card([
         [
             html.Div([
 
-                html.P(children='Number of dimensions:',
+                html.P(children='Dimensions:',
                        style={'width': '200px'}),
 
                 daq.NumericInput(
                     id='MDS_NDimensions',
-                    value=1,
-                    min=1,
-                    max=20,
-                    style={'margin-left': '15px'}
+                    value = 3,
+                    min = 1,
+                    max = max,
+                    style={'margin-left':'15px'}
+                )
+
+            ], className='row'),
+
+            html.Div([
+
+                html.P(children='Number of initializations:',
+                       style={'width': '200px'}),
+
+                daq.NumericInput(
+                    id='MDS_initializations',
+                    value = 4,
+                    min = 1,
+                    max = 10,
+                    style={'margin-left':'15px'}
+                )
+
+            ], className='row'),
+
+            html.Div([
+
+                html.P(children='Max. iterations:',
+                       style={'width': '200px'}),
+
+                daq.NumericInput(
+                    id='MDS_iterations',
+                    value = 300,
+                    min = 1,
+                    max = 1000,
+                    style={'margin-left':'15px'}
                 )
 
             ], className='row'),
@@ -163,7 +192,36 @@ tab_MDS = dbc.Card([
 tab_IsoMAP = dbc.Card([
     dbc.CardBody(
         [
-            html.P('This is IsoMAP Algorithm')
+            html.Div([
+
+                html.P(children='Number of dimensions:',
+                       style={'width': '200px'}),
+
+                daq.NumericInput(
+                    id='isomap_NDimensions',
+                    value = 3,
+                    min = 1,
+                    max = max,
+                    style={'margin-left':'15px'}
+                )
+
+            ], className='row'),
+
+            html.Div([
+
+                html.P(children='Number of Neighbors:',
+                       style={'width': '200px'}),
+
+                daq.NumericInput(
+                    id='isomap_nneighbors',
+                    value = 10,
+                    min = 1,
+                    max = 100,
+                    style={'margin-left':'15px'}
+                )
+
+            ], className='row'),
+
         ]
     )
 ])
@@ -171,7 +229,21 @@ tab_IsoMAP = dbc.Card([
 tab_LLE = dbc.Card([
     dbc.CardBody(
         [
-            html.P('This is LLE Algorithm')
+            html.Div([
+
+                html.P(children='Number of dimensions:',
+                       style={'width': '200px'}),
+
+                daq.NumericInput(
+                    id='LLE_NDimensions',
+                    value = 3,
+                    min = 1,
+                    max = max,
+                    style={'margin-left':'15px'}
+                )
+
+            ], className='row'),
+
         ]
     )
 ])
@@ -179,7 +251,21 @@ tab_LLE = dbc.Card([
 tab_KPCA = dbc.Card([
     dbc.CardBody(
         [
-            html.P('This is KPCA Algorithm')
+            html.Div([
+
+                html.P(children='Number of dimensions:',
+                       style={'width': '200px'}),
+
+                daq.NumericInput(
+                    id='KPCA_NDimensions',
+                    value = 3,
+                    min = 1,
+                    max = max,
+                    style={'margin-left':'15px'}
+                )
+
+            ], className='row'),
+
         ]
     )
 ])
@@ -187,7 +273,21 @@ tab_KPCA = dbc.Card([
 tab_tSNE = dbc.Card([
     dbc.CardBody(
         [
-            html.P('This is t-SNE Algorithm')
+            html.Div([
+
+                html.P(children='Number of dimensions:',
+                       style={'width': '200px'}),
+
+                daq.NumericInput(
+                    id='tSNE_NDimensions',
+                    value = 3,
+                    min = 1,
+                    max = max,
+                    style={'margin-left':'15px'}
+                )
+
+            ], className='row'),
+
         ]
     )
 ])
@@ -335,7 +435,7 @@ content = html.Div(id="page-content",
                                     html.Div(
                                         id='manifold-graph',
                                         children=[
-                                            dcc.Graph(figure=fig)
+                                            dcc.Graph()
                                         ],
                                         style={
                                             'margin-top': '15px',
@@ -378,9 +478,7 @@ def parse_contents(contents, filename):
     #print(dff)
     return dff.to_json(date_format='iso',orient = 'split')
 
-def apply_manifold(data, algorithm = 'PCA', ncomponents = 3):
-    max_iter = 100
-    n_neighbors = 10
+def apply_manifold(data, algorithm = 'PCA', ncomponents = 3, max_iter=100, n_neighbors=10, n_init=1):
 
     if(data is not None):
         scaler = StandardScaler()
@@ -395,7 +493,7 @@ def apply_manifold(data, algorithm = 'PCA', ncomponents = 3):
             return principalDf
 
         elif(algorithm == 'MDS'):
-            manifold = MDS(n_components=ncomponents, max_iter=max_iter, n_init=1)
+            manifold = MDS(n_components=ncomponents, max_iter=max_iter, n_init=n_init)
             principalComponents = manifold.fit_transform(df_scaled_data)
             principalDf = pd.DataFrame(data = principalComponents
                                        , columns = ['Principal component {}'.format(i) for i in range(ncomponents)])
@@ -528,6 +626,29 @@ def update_filtered_data(input_data, cols):
     else:
         return html.Div([])
 
+@app.callback([
+               Output('PCA_NDimensions','max'),
+               Output('MDS_NDimensions','max'),
+               Output('isomap_NDimensions','max'),
+               Output('KPCA_NDimensions','max'),
+               Output('LLE_NDimensions','max'),
+               Output('tSNE_NDimensions','max')],
+              [Input('filtered-data-storage','data')])
+def update_max_dimensions(input_data):
+    if input_data is not None:
+        try:
+            dff = pd.read_json(input_data,orient='split')
+            max_iterations = len(dff.columns)
+            return max_iterations, max_iterations, max_iterations, max_iterations, max_iterations, max_iterations
+        except:
+            max_iterations = len(df.columns)
+            return max_iterations, max_iterations, max_iterations, max_iterations, max_iterations, max_iterations
+
+    else:
+        max_iterations = len(df.columns)
+        return max_iterations, max_iterations, max_iterations, max_iterations, max_iterations, max_iterations
+
+
 @app.callback([Output('manifold-data-storage', 'data'),
                Output('dropdownDimension1','options'),
                Output('dropdownDimension2','options'),
@@ -535,24 +656,58 @@ def update_filtered_data(input_data, cols):
               [Input('Run_Button','n_clicks')],
               [State('filtered-data-storage','data'),
                State('PCA_NDimensions','value'),
-               State('tabs','active_tab')])
-def update_output_div(run_click, input_data, ncomponents, activeTab):
+               State('MDS_NDimensions','value'),
+               State('isomap_NDimensions','value'),
+               State('LLE_NDimensions','value'),
+               State('KPCA_NDimensions','value'),
+               State('tSNE_NDimensions','value'),
+               State('tabs','active_tab'),
+               State('MDS_iterations','value'),
+               State('MDS_initializations','value'),
+               State('isomap_nneighbors','value')])
+def update_output_div(run_click, input_data, PCAncomponents, MDSncomponents, isomapncomponents, LLEncomponents, KPCAncomponents, tSNEncomponents, activeTab, max_iterations, n_init, n_neighbors):
     try:
         print('RUN')
         if(input_data is not None and run_click is not None):
+            if(activeTab=='PCA'):
+                ncomponents = PCAncomponents
+            elif(activeTab=='MDS'):
+                ncomponents = MDSncomponents
+            elif(activeTab=='IsoMAP'):
+                ncomponents = isomapncomponents
+            elif(activeTab=='LLE'):
+                ncomponents = LLEncomponents
+            elif(activeTab=='KPCA'):
+                ncomponents = KPCAncomponents
+            elif(activeTab=='t-SNE'):
+                ncomponents = tSNEncomponents
+
             print('Your have clicked {} times and entered {} manifold algorithm and {} dimensions'.format(run_click,activeTab,ncomponents))
             dff = pd.read_json(input_data,orient='split')
-            principalDf = apply_manifold(dff,algorithm=activeTab,ncomponents=ncomponents)
+            principalDf = apply_manifold(dff,algorithm=activeTab,ncomponents=ncomponents, max_iter=max_iterations, n_neighbors=n_neighbors, n_init=n_init)
             print(principalDf.head())
             options = [{'label': i, 'value': i} for i in principalDf.columns]
             return principalDf.to_json(date_format='iso',orient = 'split'), options, options, options
         else:
-            principalDf = apply_manifold(df, algorithm=activeTab, ncomponents=ncomponents)
+            if(activeTab=='PCA'):
+                ncomponents = PCAncomponents
+            elif(activeTab=='MDS'):
+                ncomponents = MDSncomponents
+            elif(activeTab=='IsoMAP'):
+                ncomponents = isomapncomponents
+            elif(activeTab=='LLE'):
+                ncomponents = LLEncomponents
+            elif(activeTab=='KPCA'):
+                ncomponents = KPCAncomponents
+            elif(activeTab=='t-SNE'):
+                ncomponents = tSNEncomponents
+
+            principalDf = apply_manifold(df, algorithm=activeTab, ncomponents=ncomponents, max_iter=300, n_neighbors=10, n_init=1)
             print(principalDf.head())
             options = [{'label': i, 'value': i} for i in principalDf.columns]
             return principalDf.to_json(date_format='iso', orient='split'), options, options, options
     except:
-        principalDf = apply_manifold(df, algorithm=activeTab, ncomponents=ncomponents)
+        principalDf = apply_manifold(df, algorithm=activeTab, ncomponents=ncomponents, max_iter=300, n_neighbors=10, n_init=1)
         print(principalDf.head())
         options = [{'label': i, 'value': i} for i in principalDf.columns]
         return principalDf.to_json(date_format='iso', orient='split'), options, options, options
@@ -565,7 +720,6 @@ def update_output_div(run_click, input_data, ncomponents, activeTab):
                Input('dropdownDimension3','value'),
                Input('graphSwitch','value')])
 def update_graph(input_data, dim1, dim2,dim3, graph3d):
-    print('Input data:',input_data)
     if input_data is not None:
         try:
             dff = pd.read_json(input_data,orient='split')
@@ -675,6 +829,25 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d):
                     'margin-top':'15px',
                     'zIndex':900
                 })
+
+@app.callback(Output('graphSwitch','value'),
+              [Input('manifold-data-storage','data')])
+def update_switch(input_data):
+    if input_data is not None:
+        try:
+            dff = pd.read_json(input_data,orient='split')
+
+            if(len(dff.columns)>2):
+                g3D = True
+            else:
+                g3D = False
+
+            return g3D
+        except:
+            return True
+    else:
+        return True
+
 @app.callback(
     Output("collapse", "is_open"),
     [Input("collapse-button", "n_clicks")],
@@ -688,4 +861,4 @@ def toggle_collapse(n, is_open):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)
