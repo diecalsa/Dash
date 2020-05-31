@@ -475,6 +475,7 @@ def parse_contents(contents, filename):
 
     # Get only numeric variables
     dff = dff.select_dtypes(['number'])
+    dff = dff.dropna()
     #print(dff)
     return dff.to_json(date_format='iso',orient = 'split')
 
