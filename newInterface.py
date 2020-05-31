@@ -67,9 +67,28 @@ CONTENT_STYLE = {
     "padding": "2rem 1rem",
     "overflow-y":"scroll"
 }
+modal = html.Div(
+    [
+        dbc.Modal(
+            [
+                dbc.ModalHeader("Data loaded"),
+                dbc.ModalBody("Data set has been loaded succesfully."),
+                dbc.ModalFooter(
+                    dbc.Button("Close", id="close", className="ml-auto")
+                ),
+            ],
+            id="modal",
+        ),
+    ]
+)
+
+
+
+
 
 collapse = html.Div(
     [
+        modal,
         dbc.Button(
             "Filter Data",
             id="collapse-button",
@@ -396,6 +415,7 @@ content = html.Div(id="page-content",
                            html.Div([
                                dcc.Dropdown(
                                    id='color_label',
+                                   value='species'
                                )
                            ],style={
                                'width':'30%',
@@ -748,31 +768,33 @@ def update_output_div(run_click, input_data,complete_input_data, PCAncomponents,
 @app.callback([Output('dropdownDimension3','disabled'),
                Output('manifold-graph','children')],
               [Input('manifold-data-storage','data'),
-               Input('complete-data-storage','data'),
                Input('dropdownDimension1','value'),
                Input('dropdownDimension2','value'),
                Input('dropdownDimension3','value'),
                Input('graphSwitch','value'),
-               Input('color_label','value')])
-def update_graph(input_data,complete_input_data, dim1, dim2,dim3, graph3d, color_label):
+               Input('color_label','value')],
+              [State('complete-data-storage','data')])
+def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, complete_input_data):
     if input_data is not None:
         try:
             dff = pd.read_json(input_data,orient='split')
             dff_c = pd.read_json(complete_input_data,orient='split')
+
+            if(color_label in dff_c.columns):
+                dff['label']=dff_c[color_label]
+                label = 'label'
+            else:
+                label = None
+
             if(graph3d):
                 if(dim1 is not None and dim2 is not None and dim3 is not None):
                     x = dff[dim1].values
                     y = dff[dim2].values
                     z = dff[dim3].values
-                    if(color_label is not None):
-                        dff['label']=dff_c[color_label]
-                        label = 'label'
-                    else:
-                        label = None
-                        
+
                     fig = px.scatter_3d(dff, x=x, y=y, z=z, labels={'x':dim1,'y':dim2,'z':dim3} ,height=500,opacity=0.7,color=label)
                     fig.update_layout(
-                        margin=dict(l=0, r=0, t=20, b=20),
+                        margin=dict(l=0, r=0, t=0, b=0),
                     )
 
                     return False, html.Div([
@@ -795,34 +817,17 @@ def update_graph(input_data,complete_input_data, dim1, dim2,dim3, graph3d, color
             else:
                 if(dim1 is not None and dim2 is not None):
                     print("Update figure")
-
+                    x = dff[dim1].values
+                    y = dff[dim2].values
+                    size=[7 for i in x]
+                    fig = px.scatter(dff, x=x, y=y,labels={'x':dim1,'y':dim2}, color=label, opacity=0.7, size = size)
+                    fig.update_layout(
+                        margin=dict(l=0, r=0, t=0, b=0),
+                    )
                     return True, html.Div(
                         [
                             dcc.Graph(
-                                figure = {
-                                    'data': [dict(
-                                        x=dff[dim1].values,
-                                        y=dff[dim2].values,
-                                        mode='markers',
-                                        marker={
-                                            'size': 15,
-                                            'opacity': 0.5,
-                                            'line': {'width': 0.5, 'color': 'white'}
-                                        }
-                                    )],
-                                    'layout': dict(
-                                        xaxis={
-                                            'title': dim1,
-                                            'type': 'linear'
-                                        },
-                                        yaxis={
-                                            'title': dim2,
-                                            'type': 'linear'
-                                        },
-                                        margin={'l': 40, 'b': 40, 't': 10, 'r': 0},
-                                        hovermode='closest'
-                                    )
-                                }
+                                figure = fig
                             )],style={
                             'margin-top':'15px',
                             'zIndex':900
@@ -831,46 +836,29 @@ def update_graph(input_data,complete_input_data, dim1, dim2,dim3, graph3d, color
                 else:
                     return True, html.Div(
                         [
-                            dcc.Graph(
-                            )
+                            dcc.Graph()
                         ], style={
                             'margin-top': '15px',
                             'zIndex': 900
                         })
         except:
-
-            return False, html.Div(
+            print("Update figure exception")
+            x = df[dim1].values
+            y = df[dim2].values
+            size=[7 for i in x]
+            fig = px.scatter(df, x=x, y=y, labels={'x':dim1,'y':dim2}, color=label,size=size, opacity=0.7)
+            fig.update_layout(
+                margin=dict(l=0, r=0, t=0, b=0),
+            )
+            return True, html.Div(
                 [
                     dcc.Graph(
-                        figure = {
-                            'data': [dict(
-                                x=dff[dim1].values,
-                                y=dff[dim2].values,
-                                mode='markers',
-                                marker={
-                                    'size': 15,
-                                    'opacity': 0.5,
-                                    'line': {'width': 0.5, 'color': 'white'}
-                                }
-                            )],
-                            'layout': dict(
-                                xaxis={
-                                    'title': 'sepal_length',
-                                    'type': 'linear'
-                                },
-                                yaxis={
-                                    'title': 'sepal_width',
-                                    'type': 'linear'
-                                },
-                                margin={'l': 40, 'b': 40, 't': 10, 'r': 0},
-                                hovermode='closest'
-                            )
-                        }
-                    )
-                ],style={
+                        figure = fig
+                    )],style={
                     'margin-top':'15px',
                     'zIndex':900
-                })
+                }
+            )
 
 @app.callback(Output('graphSwitch','value'),
               [Input('manifold-data-storage','data')])
@@ -901,6 +889,16 @@ def toggle_collapse(n, is_open):
         return not is_open
     return is_open
 
+@app.callback(
+    Output("modal", "is_open"),
+    [Input("data-storage", "data"), Input("close", "n_clicks")],
+    [State("modal", "is_open")],
+)
+def toggle_modal(input_data, n2, is_open):
+    print('modal')
+    if input_data is not None or n2:
+        return not is_open
+    return is_open
 
 if __name__ == "__main__":
     app.run_server(debug=True)
