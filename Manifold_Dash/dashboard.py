@@ -270,8 +270,9 @@ def parse_contents(contents, filename, date):
         if 'csv' in filename:
             # Assume that the user uploaded a CSV file
             try:
+                # sep = None detects separator
                 df = pd.read_csv(
-                    io.StringIO(decoded.decode('utf-8')),sep = ';',decimal=',')
+                    io.StringIO(decoded.decode('utf-8')),sep = None,decimal=',')
             except:
                 df = pd.read_csv(
                     io.StringIO(decoded.decode('utf-8')), sep=',',decimal='.')
@@ -422,9 +423,6 @@ def update_filtered_data(input_data, cols):
                         'minWidth': '100px',
                         'text-align': 'center',
                         'width': '30%'
-                    },
-                    fixed_rows={
-                        'headers':True
                     }
                 ),
                 html.Hr(id='hr2')  # horizontal line
@@ -440,12 +438,13 @@ def update_filtered_data(input_data, cols):
               [Input('filtered-data-storage','children')])
 def update_output_features2(input_data):
     if input_data is not None:
+        print("Update marks")
         try:
-
             dff = pd.read_json(input_data,orient='split')
             max = len(dff.columns)
             steps = int(round(max/10,-1))
-            #steps = 1
+            if(steps<1):
+                steps = 1
             marks = {i:'{}'.format(i) for i in range(0,max,steps)}
             print("update features 2")
             print(marks)
