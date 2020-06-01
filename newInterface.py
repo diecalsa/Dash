@@ -779,11 +779,13 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, complete_inp
         try:
             dff = pd.read_json(input_data,orient='split')
             dff_c = pd.read_json(complete_input_data,orient='split')
-
+            hover_columns = dff_c.columns
+            print(hover_columns)
+            #Merge dataframes
+            dff_m= pd.merge(dff, dff_c, left_index=True, right_index=True)
+            print(dff_m.head())
             if(color_label in dff_c.columns):
-                print(dff.head())
-                print(dff_c.head())
-                dff['label']=dff_c[color_label]
+                dff_m['label']=dff_c[color_label]
                 label = 'label'
             else:
                 label = None
@@ -794,7 +796,7 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, complete_inp
                     y = dff[dim2].values
                     z = dff[dim3].values
 
-                    fig = px.scatter_3d(dff, x=x, y=y, z=z, labels={'x':dim1,'y':dim2,'z':dim3} ,opacity=0.7,color=label, template='plotly')
+                    fig = px.scatter_3d(dff_m, x=x, y=y, z=z, labels={'x':dim1,'y':dim2,'z':dim3} ,opacity=0.7,color=label, template='plotly', hover_data=hover_columns)
                     fig.update_layout(
                         margin=dict(l=0, r=0, t=0, b=0),
                         plot_bgcolor='rgba(0,0,0,0)',
@@ -827,7 +829,7 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, complete_inp
                     x = dff[dim1].values
                     y = dff[dim2].values
                     size=[7 for i in x]
-                    fig = px.scatter(dff, x=x, y=y,labels={'x':dim1,'y':dim2}, color=label, opacity=0.7, size = size)
+                    fig = px.scatter(dff_m, x=x, y=y,labels={'x':dim1,'y':dim2}, color=label, opacity=0.7, size = size, hover_data=hover_columns)
                     #fig.update_xaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
                     #fig.update_yaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
                     fig.update_xaxes(showline=True, linewidth = 1, linecolor='black')
@@ -860,7 +862,7 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, complete_inp
             x = df[dim1].values
             y = df[dim2].values
             size=[7 for i in x]
-            fig = px.scatter(df, x=x, y=y, labels={'x':dim1,'y':dim2}, color=label,size=size, opacity=0.7)
+            fig = px.scatter(df, x=x, y=y, labels={'x':dim1,'y':dim2}, color=label,size=size, opacity=0.7, hover_data=hover_columns)
             fig.update_xaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
             fig.update_yaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
             fig.update_layout(
