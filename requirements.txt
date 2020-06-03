@@ -7,5 +7,6 @@ dash_html_components
 plotly.express
 dash_daq
 flask_caching
+json
 pandas
 scikit-learn
