@@ -1,0 +1,11 @@
+base64
+io
+dash
+dash_bootstrap_components
+dash_core_components
+dash_html_components
+plotly.express
+dash_daq
+flask_caching
+pandas
+scikit-learn
