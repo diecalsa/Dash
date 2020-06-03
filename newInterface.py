@@ -45,6 +45,7 @@ value_c = df_c.columns[0]
 options = [{'label': i, 'value': i} for i in df.columns]
 value = df.columns
 max = len(df.columns)
+first_iter = True
 
 # the style arguments for the sidebar. We use position:fixed and a fixed width
 SIDEBAR_STYLE = {
@@ -869,10 +870,11 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, c
             dff = pd.read_json(input_data,orient='split')
             dff_c = pd.read_json(complete_input_data,orient='split')
             hover_columns = hoverdata
+            hover_columns.append(dff_c.index)
             print(hover_columns)
             #Merge dataframes
             dff_m= pd.merge(dff, dff_c, left_index=True, right_index=True)
-            print(dff_m.head())
+            #print(dff_m.head())
             if(color_label in dff_c.columns):
                 dff_m['label']=dff_c[color_label]
                 label = 'label'
@@ -884,6 +886,7 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, c
                     x = dff[dim1].values
                     y = dff[dim2].values
                     z = dff[dim3].values
+                    #print(dff_m.index)
 
                     fig = px.scatter_3d(dff_m, x=x, y=y, z=z, labels={'x':dim1,'y':dim2,'z':dim3} ,opacity=0.7,color=label, template='plotly', hover_data=hover_columns)
                     fig.update_layout(
@@ -1022,9 +1025,13 @@ def toggle_collapse(n, is_open):
 )
 def toggle_modal(input_data, n2, is_open):
     print('modal')
-    if input_data is not None or n2:
-        return not is_open
-    return is_open
+    global first_iter
+    if(not first_iter):
+        if input_data is not None or n2:
+            return not is_open
+        return is_open
+    first_iter = False
+    return False
 # options for the dropdown
 
 @app.callback(Output('histogram','children'),
@@ -1035,12 +1042,13 @@ def update_histogram(column,input_data, selectedData):
     if input_data is not None:
         dff_c = pd.read_json(input_data,orient='split')
     if selectedData is not None:
-        print(selectedData)
+        #print(selectedData)
         points = selectedData['points']
-        pointsIndex = [i['pointIndex'] for i in points]
-        #print(dff_c[pointsIndex])
-        print('Length:',len(pointsIndex),pointsIndex)
-        print(column)
+        pointsIndex = [i['customdata'][-1] for i in points]
+
+
+        #print('Length:',len(pointsIndex),pointsIndex)
+        #print(column)
         try:
             hist_df = dff_c.iloc[pointsIndex,:]
             if(column is not None):
