@@ -23,7 +23,7 @@ import dash_table
 import dash_daq as daq
 from flask_caching import Cache
 import os
-
+import json
 import pandas as pd
 import numpy as np
 
@@ -156,6 +156,7 @@ collapse2 = html.Div(
                             html.P('2D'),
                             daq.ToggleSwitch(
                                 id='graphSwitch',
+                                color='#007bff',
                                 value=True,
                             ),
                             html.P('3D')
@@ -173,7 +174,7 @@ collapse2 = html.Div(
                                 style={'verticalAlign':'middle'}
                             )
                         ],style={
-                            'width':'50%'
+                            'width':'45%'
                         })
                     ],className='row'),
 
@@ -429,8 +430,14 @@ tab_tSNE = dbc.Card([
 sidebar = html.Div(
     [
         html.Div([
+            
            html.H2(children='Manifold Algorithms',
-                   style={'text-align':'center'})
+                   style={'text-align':'center'}),
+            
+            html.Img(src='https://otriuv.es/wp-content/uploads/2014/03/logo-idal.png',
+            style={'margin-left': '20%',
+                    'width': '50%'})
+            
         ]),
         html.Div([
             dcc.Upload(
@@ -520,7 +527,9 @@ content = html.Div(id="page-content",
                                     html.Div(
                                         id='manifold-graph',
                                         children=[
-                                            dcc.Graph()
+                                            dcc.Graph(
+                                                id='manifold-gr'
+                                            )
                                         ],
                                         style={
                                             'margin-top': '15px',
@@ -529,6 +538,38 @@ content = html.Div(id="page-content",
                                     )
                                     ])
                         ]),
+                       html.Div(
+                           id='histogram-div',
+                           children=[
+                               html.Div(
+                                   [
+                                       dcc.Dropdown(
+                                           id='dropdown-variable',
+                                           placeholder='Select variable for histogram',
+                                           options=options_c,
+                                           style={
+                                               'width':'100%',
+                                           }
+                                       )
+                                   ],id='select-hist-variable',
+                                   className='row',
+                                   style={
+                                       'margin-top':'15px',
+                                       'display':'none',
+                                       'zIndex':1
+                                   }),
+                               dcc.Loading(id='loading-hist',
+                                           type='circle',
+                                           children=[
+                                               html.Div(id='histogram',
+                                                        style={
+                                                            'zIndex':900,
+                                                        })
+                                           ]),
+                           ]
+                       )
+
+
                    ])
 
 
@@ -746,7 +787,8 @@ def update_max_dimensions(input_data):
                Output('dropdownDimension3','options'),
                Output('color_label','options'),
                Output('dropdownHoverData','options'),
-               Output('dropdownHoverData','value')],
+               Output('dropdownHoverData','value'),
+               Output('dropdown-variable','options')],
               [Input('Run_Button','n_clicks')],
               [State('filtered-data-storage','data'),
                State('complete-data-storage','data'),
@@ -784,7 +826,7 @@ def update_output_div(run_click, input_data,complete_input_data, PCAncomponents,
             print(principalDf.head())
             options = [{'label': i, 'value': i} for i in principalDf.columns]
             options_c = [{'label': i, 'value': i} for i in dff_c.columns]
-            return principalDf.to_json(date_format='iso',orient = 'split'), options, options, options, options_c, options_c, dff_c.columns[:5]
+            return principalDf.to_json(date_format='iso',orient = 'split'), options, options, options, options_c, options_c, dff_c.columns[:5], options_c
         else:
             if(activeTab=='PCA'):
                 ncomponents = PCAncomponents
@@ -803,13 +845,13 @@ def update_output_div(run_click, input_data,complete_input_data, PCAncomponents,
             print(principalDf.head())
             options = [{'label': i, 'value': i} for i in principalDf.columns]
             options_c = [{'label': i, 'value': i} for i in df_c.columns]
-            return principalDf.to_json(date_format='iso', orient='split'), options, options, options, options_c, options_c, df_c.columns[:5]
+            return principalDf.to_json(date_format='iso', orient='split'), options, options, options, options_c, options_c, df_c.columns[:5], options_c
     except:
         principalDf = apply_manifold(df, algorithm=activeTab, ncomponents=ncomponents, max_iter=300, n_neighbors=10, n_init=1)
         print(principalDf.head())
         options = [{'label': i, 'value': i} for i in principalDf.columns]
         options_c = [{'label': i, 'value': i} for i in df_c.columns]
-        return principalDf.to_json(date_format='iso', orient='split'), options, options, options, options_c,  options_c, df_c.columns[:5]
+        return principalDf.to_json(date_format='iso', orient='split'), options, options, options, options_c,  options_c, df_c.columns[:5], options_c
 
 @app.callback([Output('dropdownDimension3','disabled'),
                Output('manifold-graph','children')],
@@ -847,10 +889,12 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, c
                     fig.update_layout(
                         margin=dict(l=0, r=0, t=0, b=0),
                         plot_bgcolor='rgba(0,0,0,0)',
+                        clickmode='event+select'
                     )
 
                     return False, html.Div([
                         dcc.Graph(
+                            id='manifold-gr',
                             figure=fig,
                             style={
                                 'height':'70vh'
@@ -888,6 +932,7 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, c
                     return True, html.Div(
                         [
                             dcc.Graph(
+                                id='manifold-gr',
                                 figure = fig
                             )],style={
                             'margin-top':'15px',
@@ -898,7 +943,9 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, c
                 else:
                     return True, html.Div(
                         [
-                            dcc.Graph()
+                            dcc.Graph(
+                                id='manifold-gr',
+                            )
                         ], style={
                             'margin-top': '15px',
                             'zIndex': 900,
@@ -919,6 +966,7 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, c
             return True, html.Div(
                 [
                     dcc.Graph(
+                        id='manifold-gr',
                         figure = fig
                     )],style={
                     'margin-top':'15px',
@@ -979,6 +1027,52 @@ def toggle_modal(input_data, n2, is_open):
     return is_open
 # options for the dropdown
 
+@app.callback(Output('histogram','children'),
+              [Input('dropdown-variable','value')],
+              [State('complete-data-storage','data'),
+               State('manifold-gr','selectedData')])
+def update_histogram(column,input_data, selectedData):
+    if input_data is not None:
+        dff_c = pd.read_json(input_data,orient='split')
+    if selectedData is not None:
+        print(selectedData)
+        points = selectedData['points']
+        pointsIndex = [i['pointIndex'] for i in points]
+        #print(dff_c[pointsIndex])
+        print('Length:',len(pointsIndex),pointsIndex)
+        print(column)
+        try:
+            hist_df = dff_c.iloc[pointsIndex,:]
+            if(column is not None):
+                fig = px.histogram(hist_df,x=column,nbins=20)
+
+                return html.Div([
+                    dcc.Graph(
+                        figure=fig
+                    )
+                ],style={
+                    'zIndex':900
+                })
+            else:
+                return html.Div([])
+        except:
+            return html.Div([])
+
+@app.callback([Output('dropdown-variable','value'),
+               Output('select-hist-variable','style')],
+              [Input('manifold-gr','selectedData'),
+               Input('dropdown-variable','options')])
+def enable_disable_dropdown(selected_data, options):
+    if(selected_data is not None and options is not None):
+        return options[0]['label'], {
+            'margin-top':'15px',
+            'display':'block'
+        }
+    else:
+        return None, {
+            'margin-top':'15px',
+            'display':'none'
+        }
 
 
 if __name__ == "__main__":
