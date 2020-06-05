@@ -19,7 +19,6 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import plotly.express as px
-import plotly.figure_factory as ff
 import dash_table
 import dash_daq as daq
 from flask_caching import Cache
@@ -46,7 +45,6 @@ value_c = df_c.columns[0]
 options = [{'label': i, 'value': i} for i in df.columns]
 value = df.columns
 max = len(df.columns)
-nDim = 3
 first_iter = True
 
 # the style arguments for the sidebar. We use position:fixed and a fixed width
@@ -262,7 +260,7 @@ tab_PCA = dbc.Card([
 
                 daq.NumericInput(
                     id='PCA_NDimensions',
-                    value = nDim,
+                    value = 3,
                     min = 1,
                     max = max,
                     style={'margin-left':'15px'}
@@ -284,7 +282,7 @@ tab_MDS = dbc.Card([
 
                 daq.NumericInput(
                     id='MDS_NDimensions',
-                    value = nDim,
+                    value = 3,
                     min = 1,
                     max = max,
                     style={'margin-left':'15px'}
@@ -336,7 +334,7 @@ tab_IsoMAP = dbc.Card([
 
                 daq.NumericInput(
                     id='isomap_NDimensions',
-                    value = nDim,
+                    value = 3,
                     min = 1,
                     max = max,
                     style={'margin-left':'15px'}
@@ -373,7 +371,7 @@ tab_LLE = dbc.Card([
 
                 daq.NumericInput(
                     id='LLE_NDimensions',
-                    value = nDim,
+                    value = 3,
                     min = 1,
                     max = max,
                     style={'margin-left':'15px'}
@@ -395,7 +393,7 @@ tab_KPCA = dbc.Card([
 
                 daq.NumericInput(
                     id='KPCA_NDimensions',
-                    value = nDim,
+                    value = 3,
                     min = 1,
                     max = max,
                     style={'margin-left':'15px'}
@@ -417,7 +415,7 @@ tab_tSNE = dbc.Card([
 
                 daq.NumericInput(
                     id='tSNE_NDimensions',
-                    value = nDim,
+                    value = 3,
                     min = 1,
                     max = max,
                     style={'margin-left':'15px'}
@@ -552,8 +550,7 @@ content = html.Div(id="page-content",
                                            options=options_c,
                                            style={
                                                'width':'100%',
-                                           },
-                                           #multi=True
+                                           }
                                        )
                                    ],id='select-hist-variable',
                                    className='row',
@@ -924,11 +921,7 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, c
                 if(dim1 is not None and dim2 is not None):
                     print("Update figure")
                     x = dff[dim1].values
-                    try:
-                        y = dff[dim2].values
-                    except:
-                        y = [0 for i in x]
-
+                    y = dff[dim2].values
                     size=[5 for i in x]
                     fig = px.scatter(dff_m, x=x, y=y,labels={'x':dim1,'y':dim2}, color=label, opacity=0.7, size = size, hover_data=hover_columns)
                     #fig.update_xaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
@@ -1045,7 +1038,7 @@ def toggle_modal(input_data, n2, is_open):
               [Input('dropdown-variable','value')],
               [State('complete-data-storage','data'),
                State('manifold-gr','selectedData')])
-def update_histogram(columns,input_data, selectedData):
+def update_histogram(column,input_data, selectedData):
     if input_data is not None:
         dff_c = pd.read_json(input_data,orient='split')
     if selectedData is not None:
@@ -1058,12 +1051,9 @@ def update_histogram(columns,input_data, selectedData):
         #print(column)
         try:
             hist_df = dff_c.iloc[pointsIndex,:]
-            distplot_df = hist_df[columns]
-            if(columns is not None):
-                #fig = px.histogram(hist_df,x=column,nbins=20)
-                #print([distplot_df[i] for i in distplot_df.columns])
-                columns = [columns]
-                fig = ff.create_distplot([hist_df[i] for i in columns],columns,bin_size=.25)
+            if(column is not None):
+                fig = px.histogram(hist_df,x=column,nbins=20)
+
                 return html.Div([
                     dcc.Graph(
                         figure=fig
@@ -1074,7 +1064,6 @@ def update_histogram(columns,input_data, selectedData):
             else:
                 return html.Div([])
         except:
-            print("error histogram")
             return html.Div([])
 
 @app.callback([Output('dropdown-variable','value'),
@@ -1092,7 +1081,6 @@ def enable_disable_dropdown(selected_data, options):
             'margin-top':'15px',
             'display':'none'
         }
-
 
 
 if __name__ == "__main__":
