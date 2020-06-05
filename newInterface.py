@@ -19,6 +19,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import plotly.express as px
+import plotly.figure_factory as ff
 import dash_table
 import dash_daq as daq
 from flask_caching import Cache
@@ -759,23 +760,60 @@ def update_filtered_data(input_data, cols):
     else:
         return html.Div([])
 
-@app.callback([
-               Output('PCA_NDimensions','max'),
+@app.callback([Output('PCA_NDimensions','max'),
                Output('MDS_NDimensions','max'),
                Output('isomap_NDimensions','max'),
                Output('KPCA_NDimensions','max'),
                Output('LLE_NDimensions','max'),
-               Output('tSNE_NDimensions','max')],
-              [Input('filtered-data-storage','data')])
-def update_max_dimensions(input_data):
+               Output('tSNE_NDimensions','max'),
+               Output('PCA_NDimensions','value'),
+               Output('MDS_NDimensions','value'),
+               Output('isomap_NDimensions','value'),
+               Output('KPCA_NDimensions','value'),
+               Output('LLE_NDimensions','value'),
+               Output('tSNE_NDimensions','value')],
+              [Input('filtered-data-storage','data')],
+              [State('PCA_NDimensions','value'),
+               State('MDS_NDimensions','value'),
+               State('isomap_NDimensions','value'),
+               State('KPCA_NDimensions','value'),
+               State('LLE_NDimensions','value'),
+               State('tSNE_NDimensions','value')])
+def update_max_dimensions(input_data, PCA_Ndim, MDS_Ndim, isomap_Ndim, KPCA_Ndim, LLE_Ndim, tSNE_Ndim):
+
+    nDims = []
+    nDims.append(PCA_Ndim)
+    nDims.append(MDS_Ndim)
+    nDims.append(isomap_Ndim)
+    nDims.append(KPCA_Ndim)
+    nDims.append(LLE_Ndim)
+    nDims.append(tSNE_Ndim)
+
     if input_data is not None:
         try:
+            nDimPCA = PCA_Ndim
+            nDimMDS = MDS_Ndim
+            nDimIsomap = isomap_Ndim
+            nDimKPCA = KPCA_Ndim
+            nDimLLE = LLE_Ndim
+            nDimtSNE = tSNE_Ndim
+
             dff = pd.read_json(input_data,orient='split')
             max_iterations = len(dff.columns)
-            return max_iterations, max_iterations, max_iterations, max_iterations, max_iterations, max_iterations
+
+            for i,dim in enumerate(nDims):
+                if(dim>max_iterations):
+                    nDims[i]=max_iterations
+
+            return max_iterations, max_iterations, max_iterations, max_iterations, max_iterations, max_iterations, nDims[0], nDims[1], nDims[2], nDims[3], nDims[4], nDims[5]
         except:
+            nDim = PCA_Ndim
             max_iterations = len(df.columns)
-            return max_iterations, max_iterations, max_iterations, max_iterations, max_iterations, max_iterations
+
+            for i,dim in enumerate(nDims):
+                if(dim>max_iterations):
+                    nDims[i]=max_iterations
+            return max_iterations, max_iterations, max_iterations, max_iterations, max_iterations, max_iterations, nDim, nDim, nDim, nDim, nDim, nDim
 
     else:
         max_iterations = len(df.columns)
@@ -921,7 +959,10 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, c
                 if(dim1 is not None and dim2 is not None):
                     print("Update figure")
                     x = dff[dim1].values
-                    y = dff[dim2].values
+                    try:
+                        y = dff[dim2].values
+                    except:
+                        y = [0 for i in x]
                     size=[5 for i in x]
                     fig = px.scatter(dff_m, x=x, y=y,labels={'x':dim1,'y':dim2}, color=label, opacity=0.7, size = size, hover_data=hover_columns)
                     #fig.update_xaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
@@ -1051,8 +1092,15 @@ def update_histogram(column,input_data, selectedData):
         #print(column)
         try:
             hist_df = dff_c.iloc[pointsIndex,:]
+            distplot_df = hist_df[column]
+            print('Categorical data:',hist_df[column].dtype == 'O')
             if(column is not None):
-                fig = px.histogram(hist_df,x=column,nbins=20)
+                if(hist_df[column].dtype == 'O'):
+                    fig = px.histogram(hist_df,x=column,nbins=20)
+                else:
+                    fig = px.histogram(hist_df,x=column,nbins=20)
+                    #columns = [column]
+                    #fig = ff.create_distplot([hist_df[i] for i in columns],columns,bin_size=.25)
 
                 return html.Div([
                     dcc.Graph(
@@ -1064,6 +1112,7 @@ def update_histogram(column,input_data, selectedData):
             else:
                 return html.Div([])
         except:
+            print("error histogram")
             return html.Div([])
 
 @app.callback([Output('dropdown-variable','value'),
