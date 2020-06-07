@@ -601,7 +601,7 @@ content = html.Div(id="page-content",
                                                options=options_c,
                                                style={
                                                    'margin-left':'15px',
-                                                   'width':'70%'
+                                                   'width':'60%'
                                                }
                                            ),
                                        ],style={
@@ -752,6 +752,22 @@ def get_max_distance(dataFrame):
 
     return np.max(distance)
 
+def create_hover(df, dims, hoverdata, hovercomponents, label):
+    nDimsDf = df.shape[1]
+    print(nDimsDf)
+    hover = dict(Id=df.index)
+
+    for i in range(min(nDimsDf,len(dims))):
+        if(dims[i] is not None):
+            hover[dims[i]]=hovercomponents
+
+    for component in hoverdata:
+        hover[component]=True
+
+    if(label is not None):
+        hover['label']=False
+
+    return hover
 # -----------------------------------------
 
 
@@ -1007,11 +1023,17 @@ def update_slider(input_data):
 def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, min_dist, hover_components, complete_input_data):
     if input_data is not None:
 
+        # Read manifold data and complete data set data
         dff = pd.read_json(input_data,orient='split')
         dff_c = pd.read_json(complete_input_data,orient='split')
 
+        dims = [dim1, dim2, dim3]
+
+        nDims = dff.shape[1]
+
+
+        #print("Dff cols:",dff.shape[1])
         #print(hover_columns)
-        #Merge dataframes
 
         # Display only data with distance > minDistance
         outliers = get_outliers(dff,min_dist)
@@ -1019,12 +1041,14 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, m
         dff = dff[outliers]
         dff_c = dff_c[outliers]
 
+        # Add the ID to identify the points and display histogram
         hover_columns = hoverdata
         hover_columns.append(dff_c.index)
 
+        # Merge manifold and complete data
         dff_m= pd.merge(dff, dff_c, left_index=True, right_index=True)
 
-        #print(dff_m.head())
+        # Set color column
         if(color_label in dff_c.columns):
             dff_m['label']=dff_c[color_label]
             label = 'label'
@@ -1034,41 +1058,11 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, m
         #print(dff_m.columns)
         #print("Label",label)
 
+        hover = create_hover(dff,dims,hoverdata[:-1],hover_components,label)
+        #print(hover)
+
         if(graph3d):
-
             if(dim1 is not None and dim2 is not None and dim3 is not None):
-                if(hover_components):
-                    if(label is not None):
-                        hover={'Id':dff_c.index,
-                               dim1:True,
-                               dim2:True,
-                               dim3:True,
-                               'label':False,
-                               }
-                    else:
-                        hover={'Id':dff_c.index,
-                               dim1:True,
-                               dim2:True,
-                               dim3:True,
-                               }
-                else:
-                    if(label is not None):
-                        hover={'Id':dff_c.index,
-                               dim1:False,
-                               dim2:False,
-                               dim3:False,
-                               'label':False,
-                               }
-                    else:
-                        hover={'Id':dff_c.index,
-                               dim1:False,
-                               dim2:False,
-                               dim3:False,
-                               }
-
-                for col in hoverdata[:-1]:
-                    hover[col]=True
-
                 x = dff[dim1].values
                 y = dff[dim2].values
                 z = dff[dim3].values
@@ -1104,29 +1098,16 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, m
                     })
         else:
             if(dim1 is not None and dim2 is not None):
-                if(hover_components):
-                    hover={'Id':dff_c.index,
-                           'label':False,
-                           dim1:True,
-                           dim2:True,
-
-                           }
-                else:
-                    hover={'Id':dff_c.index,
-                           'label':False,
-                           dim1:False,
-                           dim2:False,
-                           }
-
-                for col in hoverdata[:-1]:
-                    hover[col]=True
 
                 print("Update figure")
                 x = dff[dim1].values
+                # If only one dimension set y to 0
                 try:
                     y = dff[dim2].values
                 except:
                     y = [0 for i in x]
+
+                print(y)
 
                 fig = px.scatter(dff_m, x=x, y=y,labels={'x':dim1,'y':dim2}, color=label, opacity=0.7, hover_data=hover)
                 #fig.update_xaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
@@ -1143,6 +1124,7 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, m
                 fig.update_layout(
                     margin=dict(l=0, r=0, t=0, b=0),
                     plot_bgcolor='rgba(0,0,0,0)',
+                    dragmode='select'
                 )
                 return True, html.Div(
                     [
