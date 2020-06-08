@@ -18,6 +18,7 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
+import plotly.graph_objs as go
 import plotly.express as px
 import plotly.figure_factory as ff
 import dash_table
@@ -27,6 +28,7 @@ import os
 import json
 import pandas as pd
 import numpy as np
+import math
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.preprocessing import StandardScaler
@@ -244,7 +246,27 @@ collapse2 = html.Div(
                                 'width':'100%'
                             }
                         )
-                    ], className='row')
+                    ], className='row'),
+                    html.Div([
+                        html.P('Minimal distance to origin (% of max. distance):')
+                    ],className='row',
+                    style={
+                        'margin-top':'15px'
+                    }),
+
+                    html.Div([
+                        dcc.Slider(
+                            id='min-distance-slider',
+                            min=0,
+                            max=100,
+                            step=1,
+                            value=0,
+                            marks={i:'{}%'.format(i) for i in range(0,110,10)},
+                        )
+                    ],
+                    style={
+                        'width':'100%'
+                    })
                 ])
             )),
             id="collapse2",
@@ -437,8 +459,13 @@ sidebar = html.Div(
                    style={'text-align':'center'}),
             
             html.Img(src='https://otriuv.es/wp-content/uploads/2014/03/logo-idal.png',
-            style={'margin-left': '20%',
-                    'width': '50%'})
+            style={'margin-left': '25%',
+                    'width': '50%'}),
+
+            html.P('Salim Chikh & Diego Calvete',
+                   style={
+                       'text-align':'center'
+                   })
             
         ]),
         html.Div([
@@ -523,6 +550,21 @@ content = html.Div(id="page-content",
                    children=[
                        collapse2,
                        html.Div([
+                           html.Div([
+                               html.P('Show principal components on hover data'),
+                               daq.ToggleSwitch(
+                                   id='hover-components',
+                                   color='#007bff',
+                                   value=True,
+                                   style={
+                                       'margin-left':'15px'
+                                   }
+                               )
+                           ],className='row',
+                           style={
+                               'margin-top':'15px',
+                               'margin-left':'1%'
+                           }),
                         dcc.Loading(id='loading-graph',
                             type='circle',
                             children=[
@@ -545,14 +587,28 @@ content = html.Div(id="page-content",
                            children=[
                                html.Div(
                                    [
-                                       dcc.Dropdown(
-                                           id='dropdown-variable',
-                                           placeholder='Select variable for histogram',
-                                           options=options_c,
-                                           style={
-                                               'width':'100%',
-                                           }
-                                       )
+                                       html.Div([
+                                           html.P('Histogram'),
+                                           daq.ToggleSwitch(
+                                               id='hist-distplot',
+                                               color='#007bff',
+                                               value=False,
+                                           ),
+                                           html.P('Distplot'),
+                                           dcc.Dropdown(
+                                               id='dropdown-variable',
+                                               placeholder='Select variable for histogram',
+                                               options=options_c,
+                                               style={
+                                                   'margin-left':'15px',
+                                                   'width':'60%'
+                                               }
+                                           ),
+                                       ],style={
+                                           'width':'100%',
+                                           'margin-left':'5%'
+                                       }, className='row'),
+
                                    ],id='select-hist-variable',
                                    className='row',
                                    style={
@@ -665,6 +721,53 @@ def apply_manifold(data, algorithm = 'PCA', ncomponents = 3, max_iter=100, n_nei
             print('Invalid algorithm {}'.format(algorithm))
     else:
         print('Missing input data')
+
+
+def get_outliers(dataFrame,minDistance):
+    dist = np.zeros(dataFrame.shape[0])
+
+    for col in dataFrame.columns:
+        dist = dist + np.power(dataFrame[col],2)
+        #print(dist)
+
+    distance = np.sqrt(dist)
+
+    print("Min distance:",np.min(distance))
+    print("Max distance:",np.max(distance))
+
+    minDist = np.max(distance)*minDistance/100
+
+    print("Min distance:",minDist)
+
+    return distance>=minDist
+
+def get_max_distance(dataFrame):
+    dist = np.zeros(dataFrame.shape[0])
+
+    for col in dataFrame.columns:
+        dist = dist + np.power(dataFrame[col],2)
+        #print(dist)
+
+    distance = np.sqrt(dist)
+
+    return np.max(distance)
+
+def create_hover(df, dims, hoverdata, hovercomponents, label):
+    nDimsDf = df.shape[1]
+    print(nDimsDf)
+    hover = dict(Id=df.index)
+
+    for i in range(min(nDimsDf,len(dims))):
+        if(dims[i] is not None):
+            hover[dims[i]]=hovercomponents
+
+    for component in hoverdata:
+        hover[component]=True
+
+    if(label is not None):
+        hover['label']=False
+
+    return hover
 # -----------------------------------------
 
 
@@ -683,8 +786,8 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         #print(dff)
         # Get only numeric variables
         dff_numeric = dff.select_dtypes(['number'])
-        print(dff.shape)
-        print(dff_numeric.shape)
+        #print(dff.shape)
+        #print(dff_numeric.shape)
         return dff_numeric.to_json(date_format='iso',orient = 'split'), dff.to_json(date_format='iso',orient = 'split')
     else:
         return df.to_json(date_format='iso',orient = 'split'), df_c.to_json(date_format='iso',orient = 'split')
@@ -892,6 +995,19 @@ def update_output_div(run_click, input_data,complete_input_data, PCAncomponents,
         options_c = [{'label': i, 'value': i} for i in df_c.columns]
         return principalDf.to_json(date_format='iso', orient='split'), options, options, options, options_c,  options_c, df_c.columns[:5], options_c
 
+@app.callback([Output('min-distance-slider','max'),
+               Output('min-distance-slider','marks'),
+               Output('min-distance-slider','step')],
+              [Input('manifold-data-storage','data')])
+def update_slider(input_data):
+    dff = pd.read_json(input_data,orient='split')
+    max_dist = get_max_distance(dff)
+
+    marks = {i:'{}%'.format(i) for i in range(0,110,10)}
+    #print(marks)
+
+    return 100, marks, 1
+
 @app.callback([Output('dropdownDimension3','disabled'),
                Output('manifold-graph','children')],
               [Input('manifold-data-storage','data'),
@@ -900,124 +1016,138 @@ def update_output_div(run_click, input_data,complete_input_data, PCAncomponents,
                Input('dropdownDimension3','value'),
                Input('graphSwitch','value'),
                Input('color_label','value'),
-               Input('dropdownHoverData','value')],
+               Input('dropdownHoverData','value'),
+               Input('min-distance-slider','value'),
+               Input('hover-components','value')],
               [State('complete-data-storage','data')])
-def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, complete_input_data):
+def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, min_dist, hover_components, complete_input_data):
     if input_data is not None:
-        try:
-            dff = pd.read_json(input_data,orient='split')
-            dff_c = pd.read_json(complete_input_data,orient='split')
-            hover_columns = hoverdata
-            hover_columns.append(dff_c.index)
-            print(hover_columns)
-            #Merge dataframes
-            dff_m= pd.merge(dff, dff_c, left_index=True, right_index=True)
-            #print(dff_m.head())
-            if(color_label in dff_c.columns):
-                dff_m['label']=dff_c[color_label]
-                label = 'label'
-            else:
-                label = None
 
-            if(graph3d):
-                if(dim1 is not None and dim2 is not None and dim3 is not None):
-                    x = dff[dim1].values
-                    y = dff[dim2].values
-                    z = dff[dim3].values
-                    #print(dff_m.index)
+        # Read manifold data and complete data set data
+        dff = pd.read_json(input_data,orient='split')
+        dff_c = pd.read_json(complete_input_data,orient='split')
 
-                    fig = px.scatter_3d(dff_m, x=x, y=y, z=z, labels={'x':dim1,'y':dim2,'z':dim3} ,opacity=0.7,color=label, template='plotly', hover_data=hover_columns)
-                    fig.update_layout(
-                        margin=dict(l=0, r=0, t=0, b=0),
-                        plot_bgcolor='rgba(0,0,0,0)',
-                        clickmode='event+select'
-                    )
+        dims = [dim1, dim2, dim3]
 
-                    return False, html.Div([
-                        dcc.Graph(
-                            id='manifold-gr',
-                            figure=fig,
-                            style={
-                                'height':'70vh'
-                            }
-                        )
-                    ],style={
-                        'margin-top':'15px',
-                        'zIndex':1,
-                    })
-                else:
-                    return False, html.Div(
-                        [
-                            dcc.Graph(
-                            )
-                        ], style={
-                            'margin-top': '15px',
-                            'zIndex': 900,
-                            'height':'70vh'
-                        })
-            else:
-                if(dim1 is not None and dim2 is not None):
-                    print("Update figure")
-                    x = dff[dim1].values
-                    try:
-                        y = dff[dim2].values
-                    except:
-                        y = [0 for i in x]
-                    size=[5 for i in x]
-                    fig = px.scatter(dff_m, x=x, y=y,labels={'x':dim1,'y':dim2}, color=label, opacity=0.7, size = size, hover_data=hover_columns)
-                    #fig.update_xaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
-                    #fig.update_yaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
-                    fig.update_xaxes(showline=True, linewidth = 1, linecolor='black')
-                    fig.update_yaxes(showline=True, linewidth = 1, linecolor='black')
-                    fig.update_layout(
-                        margin=dict(l=0, r=0, t=0, b=0),
-                        plot_bgcolor='rgba(0,0,0,0)'
-                    )
-                    return True, html.Div(
-                        [
-                            dcc.Graph(
-                                id='manifold-gr',
-                                figure = fig
-                            )],style={
-                            'margin-top':'15px',
-                            'zIndex':900,
-                            'height':'70vh'
-                                }
-                    )
-                else:
-                    return True, html.Div(
-                        [
-                            dcc.Graph(
-                                id='manifold-gr',
-                            )
-                        ], style={
-                            'margin-top': '15px',
-                            'zIndex': 900,
-                            'height':'70vh'
-                        })
-        except:
-            print("Update figure exception")
-            x = df[dim1].values
-            y = df[dim2].values
-            size=[7 for i in x]
-            fig = px.scatter(df, x=x, y=y, labels={'x':dim1,'y':dim2}, color=label,size=size, opacity=0.7, hover_data=hover_columns)
-            fig.update_xaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
-            fig.update_yaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
-            fig.update_layout(
-                margin=dict(l=0, r=0, t=0, b=0),
-                plot_bgcolor='rgba(0,0,0,255)'
-            )
-            return True, html.Div(
-                [
+        nDims = dff.shape[1]
+
+
+        #print("Dff cols:",dff.shape[1])
+        #print(hover_columns)
+
+        # Display only data with distance > minDistance
+        outliers = get_outliers(dff,min_dist)
+
+        dff = dff[outliers]
+        dff_c = dff_c[outliers]
+
+        # Add the ID to identify the points and display histogram
+        hover_columns = hoverdata
+        hover_columns.append(dff_c.index)
+
+        # Merge manifold and complete data
+        dff_m= pd.merge(dff, dff_c, left_index=True, right_index=True)
+
+        # Set color column
+        if(color_label in dff_c.columns):
+            dff_m['label']=dff_c[color_label]
+            label = 'label'
+        else:
+            label = None
+
+        #print(dff_m.columns)
+        #print("Label",label)
+
+        hover = create_hover(dff,dims,hoverdata[:-1],hover_components,label)
+        #print(hover)
+
+        if(graph3d):
+            if(dim1 is not None and dim2 is not None and dim3 is not None):
+                x = dff[dim1].values
+                y = dff[dim2].values
+                z = dff[dim3].values
+
+                fig = px.scatter_3d(dff_m, x=x, y=y, z=z, labels={'x':dim1,'y':dim2,'z':dim3} ,opacity=0.7,color=label, template='plotly', hover_data=hover)
+                fig.update_layout(
+                    margin=dict(l=0, r=0, t=0, b=0),
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    clickmode='event+select'
+                )
+
+                return False, html.Div([
                     dcc.Graph(
                         id='manifold-gr',
-                        figure = fig
-                    )],style={
+                        figure=fig,
+                        style={
+                            'height':'70vh'
+                        }
+                    )
+                ],style={
                     'margin-top':'15px',
-                    'zIndex':900,
-                    'height':'70vh'
-                }
-            )
+                    'zIndex':1,
+                })
+            else:
+                return False, html.Div(
+                    [
+                        dcc.Graph(
+                        )
+                    ], style={
+                        'margin-top': '15px',
+                        'zIndex': 900,
+                        'height':'70vh'
+                    })
+        else:
+            if(dim1 is not None and dim2 is not None):
+
+                print("Update figure")
+                x = dff[dim1].values
+                # If only one dimension set y to 0
+                try:
+                    y = dff[dim2].values
+                except:
+                    y = [0 for i in x]
+
+                print(y)
+
+                fig = px.scatter(dff_m, x=x, y=y,labels={'x':dim1,'y':dim2}, color=label, opacity=0.7, hover_data=hover)
+                #fig.update_xaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
+                #fig.update_yaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
+
+                fig.update_xaxes(showline=True, linewidth = 1, linecolor='black')
+                fig.update_yaxes(showline=True, linewidth = 1, linecolor='black')
+                fig.update_traces(marker=dict(size=25,
+                                              line=dict(
+                                                  color='White',
+                                                  width=1
+                                              )),
+                                  )
+                fig.update_layout(
+                    margin=dict(l=0, r=0, t=0, b=0),
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    dragmode='select'
+                )
+                return True, html.Div(
+                    [
+                        dcc.Graph(
+                            id='manifold-gr',
+                            figure = fig
+                        )],style={
+                        'margin-top':'15px',
+                        'zIndex':900,
+                        'height':'70vh'
+                            }
+                )
+            else:
+                return True, html.Div(
+                    [
+                        dcc.Graph(
+                            id='manifold-gr',
+                        )
+                    ], style={
+                        'margin-top': '15px',
+                        'zIndex': 900,
+                        'height':'70vh'
+                    })
 
 @app.callback(Output('graphSwitch','value'),
               [Input('manifold-data-storage','data')])
@@ -1065,7 +1195,7 @@ def toggle_collapse(n, is_open):
     [State("modal", "is_open")],
 )
 def toggle_modal(input_data, n2, is_open):
-    print('modal')
+    #print('modal')
     global first_iter
     if(not first_iter):
         if input_data is not None or n2:
@@ -1076,16 +1206,17 @@ def toggle_modal(input_data, n2, is_open):
 # options for the dropdown
 
 @app.callback(Output('histogram','children'),
-              [Input('dropdown-variable','value')],
+              [Input('dropdown-variable','value'),
+               Input('hist-distplot','value')],
               [State('complete-data-storage','data'),
                State('manifold-gr','selectedData')])
-def update_histogram(column,input_data, selectedData):
+def update_histogram(column, distplot, input_data, selectedData):
     if input_data is not None:
         dff_c = pd.read_json(input_data,orient='split')
     if selectedData is not None:
-        #print(selectedData)
+        print(selectedData)
         points = selectedData['points']
-        pointsIndex = [i['customdata'][-1] for i in points]
+        pointsIndex = [i['customdata'][0] for i in points]
 
 
         #print('Length:',len(pointsIndex),pointsIndex)
@@ -1093,14 +1224,18 @@ def update_histogram(column,input_data, selectedData):
         try:
             hist_df = dff_c.iloc[pointsIndex,:]
             distplot_df = hist_df[column]
-            print('Categorical data:',hist_df[column].dtype == 'O')
+
+            #print('Categorical data:',hist_df[column].dtype == 'O')
+
             if(column is not None):
                 if(hist_df[column].dtype == 'O'):
                     fig = px.histogram(hist_df,x=column,nbins=20)
                 else:
-                    fig = px.histogram(hist_df,x=column,nbins=20)
-                    #columns = [column]
-                    #fig = ff.create_distplot([hist_df[i] for i in columns],columns,bin_size=.25)
+                    if(distplot):
+                        columns = [column]
+                        fig = ff.create_distplot([hist_df[i] for i in columns],columns,bin_size=.25)
+                    else:
+                        fig = px.histogram(hist_df,x=column,nbins=20)
 
                 return html.Div([
                     dcc.Graph(
