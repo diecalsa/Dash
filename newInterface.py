@@ -1224,7 +1224,9 @@ def update_histogram(column, distplot, input_data, selectedData):
         try:
             hist_df = dff_c.iloc[pointsIndex,:]
             distplot_df = hist_df[column]
+
             #print('Categorical data:',hist_df[column].dtype == 'O')
+
             if(column is not None):
                 if(hist_df[column].dtype == 'O'):
                     fig = px.histogram(hist_df,x=column,nbins=20)
