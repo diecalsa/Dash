@@ -9,7 +9,7 @@
 
 ----
 
-## Prerequisites
+## Prerequisites :snake:
 
 The prerequisites are:
 
