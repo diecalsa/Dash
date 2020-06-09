@@ -9,7 +9,7 @@
 
 ----
 
-## Prerequisites :snake:
+## Prerequisites 
 
 The prerequisites are:
 
@@ -17,7 +17,7 @@ The prerequisites are:
 - Python3
 - pip3
 
-Verify if Python / Pip has version 3 active:
+Verify if Python / Pip has version 3 active: :snake:
 
 ```
 $> python3 --version
