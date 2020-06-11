@@ -69,9 +69,9 @@ $> python app.py
 
 ## Built with
 
-* Dash -
+* Dash[https://dash.plotly.com/] -
 * Plotly
-* Scikit-Learn
+* Scikit-Learn[https://scikit-learn.org/stable/]
 
 
 
