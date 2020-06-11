@@ -6,6 +6,11 @@
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
   - [Installation](#installation)
+  - [Run the app] (#Run-the-app)
+- [About the app](#about-the-app)
+  - [Installation](#Built-with)
+  - [Authors](#Authors)
+
 
 ----
 
@@ -70,7 +75,7 @@ $> python app.py
 ## Built with
 
 * [Dash](https://dash.plotly.com/) -
-* Plotly
+* [Plotly](https://plotly.com/)
 * [Scikit-Learn](https://scikit-learn.org/stable/)
 
 
