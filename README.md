@@ -22,7 +22,7 @@ The prerequisites are:
 - Python3
 - pip
 
-Verify if Python / Pip has version 3 active: :snake:
+Verify if Python / Pip has version 3 active :snake: :
 
 ```
 $> python3 --version
