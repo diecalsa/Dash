@@ -6,7 +6,7 @@
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
   - [Installation](#installation)
-  - [Run the app] (#Run-the-app)
+  - [Run the app](#run-the-app)
 - [About the app](#about-the-app)
   - [Installation](#Built-with)
   - [Authors](#Authors)
