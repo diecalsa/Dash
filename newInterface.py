@@ -34,6 +34,7 @@ from sklearn.decomposition import PCA, KernelPCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.manifold import Isomap, LocallyLinearEmbedding, TSNE, MDS
 
+
 app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 cache = Cache(app.server, config={
     # try 'filesystem' if you don't want to setup redis
@@ -149,10 +150,18 @@ collapse2 = html.Div(
                 html.Div([
                     html.Div([
                         html.Div([
-                            html.P('Graphic display:')
+                            html.P('Graphic display:',
+                                   style={
+                                       'font-weight': 'bold'
+                                   }
+                                   )
                         ],style={'width':'50%'}),
                         html.Div([
-                            html.P('Colorize by:')
+                            html.P('Colorize by:',
+                                   style={
+                                       'font-weight': 'bold'
+                                   }
+                                   )
                         ],style={'width':'50%'})
                     ],className='row'),
                     html.Div([
@@ -184,21 +193,33 @@ collapse2 = html.Div(
 
                     html.Div([
                         html.Div([
-                            html.P('X')
+                            html.P('X',
+                                   style={
+                                       'font-weight': 'bold'
+                                   }
+                                   )
                         ],style={'width':'30%',
                                  'text-align':'center',
-                                 'margin-left':'3%'}),
+                                 'margin-left':'0%'}),
 
                         html.Div([
-                            html.P('Y')
+                            html.P('Y',
+                                   style={
+                                       'font-weight': 'bold'
+                                   }
+                                   )
                         ],style={'width':'30%',
                                  'text-align':'center',
                                  'margin-left':'3%'}),
                         html.Div([
-                            html.P('Z')
+                            html.P('Z',
+                                   style={
+                                       'font-weight': 'bold'
+                                   }
+                                   )
                         ],style={'width':'30%',
                                  'text-align':'center',
-                                 'margin-left':'3%'})
+                                 'margin-left':'4%'})
                     ], className='row',
                         style={
                             'margin-top':'15px'
@@ -232,7 +253,11 @@ collapse2 = html.Div(
                         }),
 
                     html.Div([
-                       html.P('Select Hoverdata to display:')
+                       html.P('Select Hoverdata to display:',
+                              style={
+                                  'font-weight': 'bold'
+                              }
+                              )
                     ],className='row',
                     style={
                         'margin-top':'15px'
@@ -248,7 +273,11 @@ collapse2 = html.Div(
                         )
                     ], className='row'),
                     html.Div([
-                        html.P('Minimal distance to origin (% of max. distance):')
+                        html.P('Minimal distance to origin (% of max. distance):',
+                               style={
+                                   'font-weight': 'bold'
+                               }
+                               )
                     ],className='row',
                     style={
                         'margin-top':'15px'
@@ -266,7 +295,25 @@ collapse2 = html.Div(
                     ],
                     style={
                         'width':'100%'
-                    })
+                    }),
+
+                    html.Div([
+                        html.P('Show principal components on hover data:',
+                               style={
+                                'font-weight':'bold'
+                               }),
+                        daq.ToggleSwitch(
+                            id='hover-components',
+                            color='#007bff',
+                            value=True,
+                            style={
+                                'margin-left':'15px'
+                            }
+                        )
+                    ],className='row',
+                    style={
+                        'margin-top':'15px'
+                       }),
                 ])
             )),
             id="collapse2",
@@ -550,21 +597,6 @@ content = html.Div(id="page-content",
                    children=[
                        collapse2,
                        html.Div([
-                           html.Div([
-                               html.P('Show principal components on hover data'),
-                               daq.ToggleSwitch(
-                                   id='hover-components',
-                                   color='#007bff',
-                                   value=True,
-                                   style={
-                                       'margin-left':'15px'
-                                   }
-                               )
-                           ],className='row',
-                           style={
-                               'margin-top':'15px',
-                               'margin-left':'1%'
-                           }),
                         dcc.Loading(id='loading-graph',
                             type='circle',
                             children=[
@@ -754,7 +786,7 @@ def get_max_distance(dataFrame):
 
 def create_hover(df, dims, hoverdata, hovercomponents, label):
     nDimsDf = df.shape[1]
-    print(nDimsDf)
+    #print(nDimsDf)
     hover = dict(Id=df.index)
 
     for i in range(min(nDimsDf,len(dims))):
@@ -1107,7 +1139,7 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, m
                 except:
                     y = [0 for i in x]
 
-                print(y)
+                #print(y)
 
                 fig = px.scatter(dff_m, x=x, y=y,labels={'x':dim1,'y':dim2}, color=label, opacity=0.7, hover_data=hover)
                 #fig.update_xaxes(showline=True, linewidth = 1, showgrid=True, gridwidth=1, gridcolor='LightBlue', linecolor='black')
@@ -1214,7 +1246,7 @@ def update_histogram(column, distplot, input_data, selectedData):
     if input_data is not None:
         dff_c = pd.read_json(input_data,orient='split')
     if selectedData is not None:
-        print(selectedData)
+        #print(selectedData)
         points = selectedData['points']
         pointsIndex = [i['customdata'][0] for i in points]
 
@@ -1266,6 +1298,18 @@ def enable_disable_dropdown(selected_data, options):
             'display':'none'
         }
 
+@app.callback(Output('graphSwitch','disabled'),
+              [Input('manifold-data-storage','data')])
+def enable_disable_toggle(input_data):
+    if input_data is not None:
+        dff = pd.read_json(input_data,orient='split')
+        print("Update toggle:",dff.shape[1])
+        if(dff.shape[1]>2):
+            status = False
+        else:
+            status = True
+
+        return status
 
 if __name__ == "__main__":
     app.run_server(debug=True)
