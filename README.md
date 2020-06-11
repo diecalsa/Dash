@@ -77,5 +77,5 @@ $> python app.py
 
 ## Authors
 
-* **Salim Chikh** - 
-* **Diego Calvete** -
+* **[Salim Chikh](https://www.linkedin.com/in/salim-chikh-48b679109/)** - 
+* **[Diego Calvete](https://www.linkedin.com/in/diego-calvete-010532b5/)** -
