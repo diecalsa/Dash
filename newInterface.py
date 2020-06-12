@@ -29,6 +29,8 @@ import json
 import pandas as pd
 import numpy as np
 import math
+from flask import send_file
+import urllib.parse
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.preprocessing import StandardScaler
@@ -309,11 +311,25 @@ collapse2 = html.Div(
                             style={
                                 'margin-left':'15px'
                             }
-                        )
+                        ),
                     ],className='row',
                     style={
                         'margin-top':'15px'
                        }),
+                    html.Div([
+                        html.A(
+                            [dbc.Button(
+                                    children='Download Data',
+                                    color='primary',
+                                style={
+                                    'margin-left':'15px'
+                           })],
+                                id='download-link',
+                                download="manifold_data.csv",
+                                href="",
+                                target="_blank"
+                            )
+                    ],className='row')
                 ])
             )),
             id="collapse2",
@@ -636,6 +652,13 @@ content = html.Div(id="page-content",
                                                    'width':'60%'
                                                }
                                            ),
+                                            dbc.Button(id='Save_Button',
+                                               children='Download',
+                                               color='primary',
+                                               style={
+                                                   'margin-left':'15px',
+                                                   'width':'30%'
+                                               })
                                        ],style={
                                            'width':'100%',
                                            'margin-left':'5%'
@@ -1310,6 +1333,20 @@ def enable_disable_toggle(input_data):
             status = True
 
         return status
+
+@app.callback(
+    Output('download-link', 'href'),
+    [Input('manifold-data-storage','data')],
+    [State('complete-data-storage','data')])
+def update_download_link(manifold_data, raw_data):
+    dff = pd.read_json(manifold_data,orient='split')
+    dff_c = pd.read_json(raw_data, orient='split')
+
+    dff_m = pd.merge(dff_c, dff, left_index=True, right_index=True)
+
+    csv_string = dff_m.to_csv(index=False, encoding='utf-8')
+    csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
+    return csv_string
 
 if __name__ == "__main__":
     app.run_server(debug=True)
