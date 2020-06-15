@@ -79,7 +79,6 @@ $> python app.py
 * [Scikit-Learn](https://scikit-learn.org/stable/)
 
 
-
 ## Authors
 
 * **[Salim Chikh](https://www.linkedin.com/in/salim-chikh-48b679109/)** - 
