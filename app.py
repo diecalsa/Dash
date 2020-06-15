@@ -652,13 +652,6 @@ content = html.Div(id="page-content",
                                                    'width':'60%'
                                                }
                                            ),
-                                            dbc.Button(id='Save_Button',
-                                               children='Download',
-                                               color='primary',
-                                               style={
-                                                   'margin-left':'15px',
-                                                   'width':'30%'
-                                               })
                                        ],style={
                                            'width':'100%',
                                            'margin-left':'5%'
@@ -1349,4 +1342,4 @@ def update_download_link(manifold_data, raw_data):
     return csv_string
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)
