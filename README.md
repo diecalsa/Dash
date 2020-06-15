@@ -71,9 +71,23 @@ $> python app.py
 
 ## About the app
 
+The app allows the user to reduce the datasets dimensionality within linear and non-linear algorithms such as PCA, t-SNE, IsoMAP, etc.
+It's possible to:
+
+#### Load your own CSV dataset
+![Upload](https://github.com/diecalsa/Dash/blob/develop/src/upload_data.gif)
+
+#### Visualize the data in 2D or 3D 
 ![General](https://github.com/diecalsa/Dash/blob/master/src/General.png)
 
+#### Colorize by an original variable
+#### Select the hover data to display (principal components + original features)
+#### Choose to display only outliers by selecting the minimal distance to the origin
+#### Download the new dataset consisting of the original features and the new ones (principal components)
 ![Download](https://github.com/diecalsa/Dash/blob/develop/src/download_data.gif)
+
+
+
 
 ## Built with
 
