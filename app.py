@@ -38,6 +38,11 @@ from sklearn.manifold import Isomap, LocallyLinearEmbedding, TSNE, MDS
 
 
 app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+
+image_filename = 'img/logo-idal.png'
+encoded_image = base64.b64encode(open(image_filename, 'rb').read())
+
+
 cache = Cache(app.server, config={
     # try 'filesystem' if you don't want to setup redis
     'CACHE_TYPE': 'filesystem',
@@ -520,8 +525,7 @@ sidebar = html.Div(
             
            html.H2(children='Manifold Algorithms',
                    style={'text-align':'center'}),
-            
-            html.Img(src='https://otriuv.es/wp-content/uploads/2014/03/logo-idal.png',
+            html.Img(src='data:image/png;base64,{}'.format(encoded_image.decode()),
             style={'margin-left': '25%',
                     'width': '50%'}),
 
