@@ -71,7 +71,7 @@ $> python app.py
 
 ## About the app
 
-![General](https://github.com/diecalsa/Dash/blob/master/src/logo-idal.png)
+![General](https://github.com/diecalsa/Dash/blob/master/src/General.png)
 
 ## Built with
 
