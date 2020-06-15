@@ -73,6 +73,8 @@ $> python app.py
 
 ![General](https://github.com/diecalsa/Dash/blob/master/src/General.png)
 
+![Download](https://github.com/diecalsa/Dash/blob/develop/src/download_data.gif)
+
 ## Built with
 
 * [Dash](https://dash.plotly.com/) -
