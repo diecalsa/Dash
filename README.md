@@ -75,6 +75,7 @@ The app allows the user to reduce the datasets dimensionality within linear and 
 It's possible to:
 
 #### Load your own CSV dataset
+
 ![Upload](https://github.com/diecalsa/Dash/blob/develop/src/upload_data.gif)
 
 
@@ -82,14 +83,17 @@ It's possible to:
 * Colorize the data by an original feature
 * Select the hover data to display 
 * Choose to display only outliers by selecting the minimal distance to the origin
+
 ![Download](https://github.com/diecalsa/Dash/blob/develop/src/download_data.gif)
 
 #### Explore the data
 Your are able to visualize the data in 2D and 3D and select some points (only in 2D mode) and display a histogram or a distplot of the selected point.
+
 ![explore](https://github.com/diecalsa/Dash/blob/develop/src/explore_data.gif)
 
 
 #### Download the new dataset consisting of the original features and the new ones (principal components)
+
 ![Download](https://github.com/diecalsa/Dash/blob/develop/src/download_data.gif)
 
 
