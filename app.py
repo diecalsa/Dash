@@ -698,7 +698,7 @@ def parse_contents(contents, filename):
             try:
                 # sep = None detects separator
                 dff = pd.read_csv(
-                    io.StringIO(decoded.decode('utf-8')),sep = None,engine='python')
+                    io.StringIO(decoded.decode('utf-8')),sep = None, decimal = ",", engine='python')
             except:
                 dff = pd.read_csv(
                     io.StringIO(decoded.decode('utf-8')), sep=',',decimal='.')
@@ -838,6 +838,7 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         #print(dff)
         # Get only numeric variables
         dff_numeric = dff.select_dtypes(['number'])
+
         #print(dff.shape)
         #print(dff_numeric.shape)
         return dff_numeric.to_json(date_format='iso',orient = 'split'), dff.to_json(date_format='iso',orient = 'split')
@@ -1346,4 +1347,4 @@ def update_download_link(manifold_data, raw_data):
     return csv_string
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)
