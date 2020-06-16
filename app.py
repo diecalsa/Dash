@@ -39,7 +39,7 @@ from sklearn.manifold import Isomap, LocallyLinearEmbedding, TSNE, MDS
 
 app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-image_filename = 'img/logo-idal.png'
+image_filename = 'src/logo-idal.png'
 encoded_image = base64.b64encode(open(image_filename, 'rb').read())
 
 
