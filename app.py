@@ -1347,4 +1347,4 @@ def update_download_link(manifold_data, raw_data):
     return csv_string
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)
