@@ -49,8 +49,28 @@ cache = Cache(app.server, config={
     'CACHE_DIR':'cache-directory'
 })
 
+def getNumericVars(df, auto):
+    #Only numeric variables
+    df_numeric = df.select_dtypes(['number'])
+
+    if(auto):
+        # Auto detect categorical variables
+        allvars = set(df_numeric.columns)
+        intvars = df_numeric.columns[df_numeric.dtypes == 'int']
+        categorical = []
+        for col in intvars:
+            if(len(df_numeric[col].unique())<15):
+                categorical.append(col)
+
+        catvars = set(categorical)
+        numericvars = allvars-catvars
+        df_numeric = df_numeric[numericvars]
+
+    return df_numeric
+
 df_c = px.data.iris() # iris is a pandas DataFrame
-df = df_c.select_dtypes(['number'])
+df = getNumericVars(df_c, True)
+
 options_c = [{'label': i, 'value': i} for i in df_c.columns]
 value_c = df_c.columns[0]
 options = [{'label': i, 'value': i} for i in df.columns]
@@ -107,6 +127,20 @@ collapse = html.Div(
         dbc.Collapse(
             dbc.Card(dbc.CardBody(
                 html.Div([
+                    html.Div([
+                       html.P('Auto clean data:',
+                              style={
+                                  'font-weight': 'bold',
+                                  'margin-right':'15px',
+                                  'margin-left':'4%'
+                              }
+                              ),
+                        daq.ToggleSwitch(
+                            id='categoricalSwitch',
+                            color='#007bff',
+                            value=True,
+                        )
+                    ], className='row'),
                     html.Div([
                         dcc.Dropdown(
                             id='dropDown',
@@ -820,42 +854,50 @@ def create_hover(df, dims, hoverdata, hovercomponents, label):
         hover['label']=False
 
     return hover
+
+
 # -----------------------------------------
 
 
 # Upload data and store in data-storage
-@app.callback([Output('data-storage', 'data'),
-               Output('complete-data-storage','data')],
+@app.callback(Output('complete-data-storage','data'),
               [Input('upload-data', 'contents')],
               [State('upload-data', 'filename'),
                State('upload-data', 'last_modified')])
 @cache.memoize(timeout=60)  # in seconds
 def update_output(list_of_contents, list_of_names, list_of_dates):
     if list_of_contents is not None:
-        #print("Parse")
+        print("Parse")
         dff = parse_contents(list_of_contents, list_of_names)
-        #print("1. Datos cargados")
-        #print(dff)
-        # Get only numeric variables
-        dff_numeric = dff.select_dtypes(['number'])
-
-        #print(dff.shape)
-        #print(dff_numeric.shape)
-        return dff_numeric.to_json(date_format='iso',orient = 'split'), dff.to_json(date_format='iso',orient = 'split')
+        return dff.to_json(date_format='iso',orient = 'split')
     else:
-        return df.to_json(date_format='iso',orient = 'split'), df_c.to_json(date_format='iso',orient = 'split')
+        return df_c.to_json(date_format='iso',orient = 'split')
+
+
+@app.callback(Output('data-storage','data'),
+              [Input('complete-data-storage','data'),
+               Input('categoricalSwitch','value')])
+def update_dataStorage(input_data, autoDetectCategorical):
+    if input_data is not None:
+        dff = pd.read_json(input_data,orient='split')
+
+        dff = getNumericVars(dff,autoDetectCategorical)
+
+        return dff.to_json(date_format='iso',orient = 'split')
 
 # Update data table and dropdown
 @app.callback([Output('dropDown','options'),
                Output('dropDown','value')],
-              [Input('data-storage','data')])
-def update_data_table(input_data):
+              [Input('data-storage','data'),
+              Input('categoricalSwitch','value')])
+def update_data_table(input_data, autoDetectCategorical):
     data = []
     columns = []
     options = [{'label': i, 'value': i} for i in df.columns]
     value = df.columns
     if input_data is not None:
         dff = pd.read_json(input_data,orient='split')
+        dff = getNumericVars(dff, autoDetectCategorical)
         data = dff.to_dict('records')
         columns = [{'name': i, 'id': i} for i in dff.columns]
         options = [{'label': i, 'value': i} for i in dff.columns]
@@ -996,8 +1038,11 @@ def update_max_dimensions(input_data, PCA_Ndim, MDS_Ndim, isomap_Ndim, KPCA_Ndim
                State('tabs','active_tab'),
                State('MDS_iterations','value'),
                State('MDS_initializations','value'),
-               State('isomap_nneighbors','value')])
-def update_output_div(run_click, input_data,complete_input_data, PCAncomponents, MDSncomponents, isomapncomponents, LLEncomponents, KPCAncomponents, tSNEncomponents, activeTab, max_iterations, n_init, n_neighbors):
+               State('isomap_nneighbors','value'),
+               State('categoricalSwitch','value')])
+def update_output_div(run_click, input_data,complete_input_data, PCAncomponents, MDSncomponents, isomapncomponents, LLEncomponents, KPCAncomponents, tSNEncomponents, activeTab, max_iterations, n_init, n_neighbors, autoDetectCategorical):
+    global df
+    df = getNumericVars(df, autoDetectCategorical)
     try:
         print('RUN')
         if(input_data is not None and run_click is not None):
@@ -1244,7 +1289,7 @@ def toggle_collapse(n, is_open):
 
 @app.callback(
     Output("modal", "is_open"),
-    [Input("data-storage", "data"), Input("close", "n_clicks")],
+    [Input("complete-data-storage", "data"), Input("close", "n_clicks")],
     [State("modal", "is_open")],
 )
 def toggle_modal(input_data, n2, is_open):
@@ -1346,5 +1391,6 @@ def update_download_link(manifold_data, raw_data):
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string
 
+
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)
