@@ -860,31 +860,30 @@ def create_hover(df, dims, hoverdata, hovercomponents, label):
 
 
 # Upload data and store in data-storage
-@app.callback([Output('data-storage', 'data'),
-               Output('complete-data-storage','data')],
-              [Input('upload-data', 'contents'),
-               Input('categoricalSwitch','value')],
+@app.callback(Output('complete-data-storage','data'),
+              [Input('upload-data', 'contents')],
               [State('upload-data', 'filename'),
                State('upload-data', 'last_modified')])
 @cache.memoize(timeout=60)  # in seconds
-def update_output(list_of_contents,autoDetectCategorical, list_of_names, list_of_dates):
+def update_output(list_of_contents, list_of_names, list_of_dates):
     if list_of_contents is not None:
         print("Parse")
         dff = parse_contents(list_of_contents, list_of_names)
-        #print("1. Datos cargados")
-        #print(dff)
-        # Get only numeric variables
-        dff_numeric = getNumericVars(dff,autoDetectCategorical)
-
-        #print(dff.shape)
-        #print(dff_numeric.shape)
-        return dff_numeric.to_json(date_format='iso',orient = 'split'), dff.to_json(date_format='iso',orient = 'split')
+        return dff.to_json(date_format='iso',orient = 'split')
     else:
-        global df_c
-        print("Quitar las categoricas")
-        df = getNumericVars(df_c,autoDetectCategorical)
-        print(df.head())
-        return df.to_json(date_format='iso',orient = 'split'), df_c.to_json(date_format='iso',orient = 'split')
+        return df_c.to_json(date_format='iso',orient = 'split')
+
+
+@app.callback(Output('data-storage','data'),
+              [Input('complete-data-storage','data'),
+               Input('categoricalSwitch','value')])
+def update_dataStorage(input_data, autoDetectCategorical):
+    if input_data is not None:
+        dff = pd.read_json(input_data,orient='split')
+
+        dff = getNumericVars(dff,autoDetectCategorical)
+
+        return dff.to_json(date_format='iso',orient = 'split')
 
 # Update data table and dropdown
 @app.callback([Output('dropDown','options'),
@@ -1290,7 +1289,7 @@ def toggle_collapse(n, is_open):
 
 @app.callback(
     Output("modal", "is_open"),
-    [Input("data-storage", "data"), Input("close", "n_clicks")],
+    [Input("complete-data-storage", "data"), Input("close", "n_clicks")],
     [State("modal", "is_open")],
 )
 def toggle_modal(input_data, n2, is_open):
@@ -1394,4 +1393,4 @@ def update_download_link(manifold_data, raw_data):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)
