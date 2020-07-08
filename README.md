@@ -5,9 +5,9 @@
 
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
-  - [Create a virtual environment](#Create%20a%20virtual%20environment)
-  - [Installation in local host](#installation%20in%20localhost)
-  - [Installation with docker](#installation%20with%20docker)
+  - [Create a virtual environment](#create-a-virtual-environment)
+  - [Installation in local host](#installation-in-localhost)
+  - [Installation with docker](#installation-with-docker)
   - [Run the app](#run-the-app)
 - [About the app](#about-the-app)
   - [Built with](#Built-with)
