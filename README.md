@@ -6,7 +6,7 @@
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
   - [Create a virtual environment](#create-a-virtual-environment)
-  - [Installation in local host](#installation-in-localhost)
+  - [Installation in local host](#installation-in-local-host)
   - [Installation with docker](#installation-with-docker)
   - [Run the app](#run-the-app)
 - [About the app](#about-the-app)
@@ -100,7 +100,7 @@ It's possible to:
 * Select the hover data to display 
 * Choose to display only outliers by selecting the minimal distance to the origin
 
-![Download](https://github.com/diecalsa/Dash/blob/develop/src/download_data.gif)
+![Download](https://github.com/diecalsa/Dash/blob/develop/src/data_visualization.gif)
 
 #### Explore the data
 Your are able to visualize the data in 2D and 3D and select some points (only in 2D mode) and display a histogram or a distplot of the selected point.
