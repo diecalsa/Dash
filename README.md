@@ -92,7 +92,7 @@ It's possible to:
 
 #### Load your own CSV dataset
 
-![Upload](https://github.com/diecalsa/Dash/blob/develop/src/upload_data2.gif)
+![Upload](https://github.com/diecalsa/Dash/blob/develop/src/upload_data.gif)
 
 
 #### Set up the display options
@@ -105,7 +105,7 @@ It's possible to:
 #### Explore the data
 Your are able to visualize the data in 2D and 3D and select some points (only in 2D mode) and display a histogram or a distplot of the selected point.
 
-![explore](https://github.com/diecalsa/Dash/blob/develop/src/explore_data.gif)
+![explore](https://github.com/diecalsa/Dash/blob/develop/src/explore_data2.gif)
 
 
 #### Download the new dataset consisting of the original features and the new ones (principal components)
