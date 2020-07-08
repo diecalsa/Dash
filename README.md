@@ -5,7 +5,9 @@
 
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
-  - [Installation](#installation)
+  - [Create a virtual environment](#virtual-environment)
+  - [Installation in local host](#installation-localhost)
+  - [Installation with docker](#installation-docker)
   - [Run the app](#run-the-app)
 - [About the app](#about-the-app)
   - [Installation](#Built-with)
@@ -21,6 +23,7 @@ The prerequisites are:
 - Git
 - Python3
 - pip
+- docker (only if you want to install the app using docker)
 
 Verify if Python / Pip has version 3 active :snake: :
 
@@ -49,7 +52,7 @@ $> source activate <venv_name>
 ```
 
 
-### **Installation**
+### **Installation in local host**
 
 Clone the git repository:
 ```
@@ -62,12 +65,25 @@ Install dependencies:
 $> pip install -r requirements.txt
 ```
 
+### **Installation with docker**
+
+Run the docker container:
+
+```
+$> sudo docker run -p 8050:8050 mlia/manifoldsdash:latest
+```
+
+This command will download (if necessary) the docker container and run it. To interact with the app, you just need to open a web browser, i.e. google chrome, and insert:
+
+**127.0.0.1:8050**
+
 ### **Run the app**
 
 Run the project (local environment):
 ```
 $> python app.py
 ```
+
 
 ## About the app
 
