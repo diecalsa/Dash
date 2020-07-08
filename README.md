@@ -73,9 +73,7 @@ Run the docker container:
 $> sudo docker run -p 8050:8050 mlia/manifoldsdash:latest
 ```
 
-This command will download (if necessary) the docker container and run it. To interact with the app, you just need to open a web browser, i.e. google chrome, and insert:
-
-**127.0.0.1:8050**
+This command will download (if necessary) the docker container and run it. To interact with the app, you just need to open a web browser, i.e. google chrome, and insert: **127.0.0.1:8050**
 
 ### **Run the app**
 
