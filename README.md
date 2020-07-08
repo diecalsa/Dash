@@ -5,10 +5,12 @@
 
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
-  - [Installation](#installation)
+  - [Create a virtual environment](#create-a-virtual-environment)
+  - [Installation in local host](#installation-in-local-host)
+  - [Installation with docker](#installation-with-docker)
   - [Run the app](#run-the-app)
 - [About the app](#about-the-app)
-  - [Installation](#Built-with)
+  - [Built with](#Built-with)
   - [Authors](#Authors)
 
 
@@ -21,6 +23,7 @@ The prerequisites are:
 - Git
 - Python3
 - pip
+- docker (only if you want to install the app using docker)
 
 Verify if Python / Pip has version 3 active :snake: :
 
@@ -49,7 +52,7 @@ $> source activate <venv_name>
 ```
 
 
-### **Installation**
+### **Installation in local host**
 
 Clone the git repository:
 ```
@@ -62,12 +65,25 @@ Install dependencies:
 $> pip install -r requirements.txt
 ```
 
+### **Installation with docker**
+
+Run the docker container:
+
+```
+$> sudo docker run -p 8050:8050 mlia/manifoldsdash:latest
+```
+
+This command will download (if necessary) the docker container and run it. To interact with the app, you just need to open a web browser, i.e. google chrome, and insert:
+
+**127.0.0.1:8050**
+
 ### **Run the app**
 
 Run the project (local environment):
 ```
 $> python app.py
 ```
+
 
 ## About the app
 
@@ -84,12 +100,12 @@ It's possible to:
 * Select the hover data to display 
 * Choose to display only outliers by selecting the minimal distance to the origin
 
-![Download](https://github.com/diecalsa/Dash/blob/develop/src/download_data.gif)
+![Download](https://github.com/diecalsa/Dash/blob/develop/src/data_visualization.gif)
 
 #### Explore the data
 Your are able to visualize the data in 2D and 3D and select some points (only in 2D mode) and display a histogram or a distplot of the selected point.
 
-![explore](https://github.com/diecalsa/Dash/blob/develop/src/explore_data.gif)
+![explore](https://github.com/diecalsa/Dash/blob/develop/src/explore_data2.gif)
 
 
 #### Download the new dataset consisting of the original features and the new ones (principal components)
