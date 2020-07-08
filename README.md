@@ -92,7 +92,7 @@ It's possible to:
 
 #### Load your own CSV dataset
 
-![Upload](https://github.com/diecalsa/Dash/blob/develop/src/upload_data.gif)
+![Upload](https://github.com/diecalsa/Dash/blob/develop/src/upload_data2.gif)
 
 
 #### Set up the display options
