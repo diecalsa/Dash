@@ -269,14 +269,14 @@ collapse2 = html.Div(
                         html.Div([
                             dcc.Dropdown(
                                 id = 'dropdownDimension1',
-                                value='Principal component 0'
+                                value='Dimension 0'
                             )
                         ],style={'width':'32%'}),
 
                         html.Div([
                             dcc.Dropdown(
                                 id = 'dropdownDimension2',
-                                value='Principal component 1'
+                                value='Dimension 1'
 
                             )
                         ],style={'width':'33%',
@@ -284,7 +284,7 @@ collapse2 = html.Div(
                         html.Div([
                             dcc.Dropdown(
                                 id = 'dropdownDimension3',
-                                value='Principal component 2'
+                                value='Dimension 2'
                             )
                         ],style={'width':'33%',
                                  'margin-left':'1%'})
@@ -298,20 +298,29 @@ collapse2 = html.Div(
                               style={
                                   'font-weight': 'bold'
                               }
-                              )
+                              ),
                     ],className='row',
                     style={
                         'margin-top':'15px'
                     }),
                     html.Div([
-                        dcc.Dropdown(
-                            id = 'dropdownHoverData',
-                            placeholder='Select hoverdata',
-                            multi=True,
-                            style={
-                                'width':'100%'
-                            }
-                        )
+                        html.Div([
+                            dcc.Dropdown(
+                                id = 'dropdownHoverData',
+                                placeholder='Select hoverdata',
+                                multi=True,
+                            )
+                        ],style={
+                            'width':'80%'
+                        }),
+                        html.Div([
+                            dbc.Button(id='fill_hover',
+                                       children='Select all',
+                                       color='primary',
+                                       )
+                        ], style={
+                            'margin-left':'15px'
+                        })
                     ], className='row'),
                     html.Div([
                         html.P('Minimal distance to origin (% of max. distance):',
@@ -339,7 +348,7 @@ collapse2 = html.Div(
                     }),
 
                     html.Div([
-                        html.P('Show principal components on hover data:',
+                        html.P('Show new dimensions on hover data:',
                                style={
                                 'font-weight':'bold'
                                }),
@@ -356,6 +365,25 @@ collapse2 = html.Div(
                         'margin-top':'15px'
                        }),
                     html.Div([
+                        html.P('2D Markers size:',
+                               style={
+                                   'font-weight':'bold'
+                               }),
+                        html.Div([
+                            daq.NumericInput(
+                                id='2D-slider',
+                                value = 25,
+                                min = 1,
+                                max = 50,
+                                style={'margin-left':'15px'}
+                            )
+                        ],
+                            style={
+                                'width':'50%'
+                            })
+                    ], className='row'),
+
+                    html.Div([
                         html.A(
                             [dbc.Button(
                                     children='Download Data',
@@ -368,7 +396,10 @@ collapse2 = html.Div(
                                 href="",
                                 target="_blank"
                             )
-                    ],className='row')
+                    ],className='row',
+                    style={
+                        'margin-top':'15px'
+                    })
                 ])
             )),
             id="collapse2",
@@ -732,7 +763,7 @@ def parse_contents(contents, filename):
             try:
                 # sep = None detects separator
                 dff = pd.read_csv(
-                    io.StringIO(decoded.decode('utf-8')),sep = None, decimal = ",", engine='python')
+                    io.StringIO(decoded.decode('utf-8')),sep = None, decimal = ".", engine='python')
             except:
                 dff = pd.read_csv(
                     io.StringIO(decoded.decode('utf-8')), sep=',',decimal='.')
@@ -758,49 +789,49 @@ def apply_manifold(data, algorithm = 'PCA', ncomponents = 3, max_iter=100, n_nei
             manifold = PCA(n_components=ncomponents)
             principalComponents = manifold.fit_transform(df_scaled_data)
             principalDf = pd.DataFrame(data = principalComponents
-                                       , columns = ['Principal component {}'.format(i) for i in range(ncomponents)])
+                                       , columns = ['Dimension {}'.format(i) for i in range(ncomponents)])
             return principalDf
 
         elif(algorithm == 'MDS'):
             manifold = MDS(n_components=ncomponents, max_iter=max_iter, n_init=n_init)
             principalComponents = manifold.fit_transform(df_scaled_data)
             principalDf = pd.DataFrame(data = principalComponents
-                                       , columns = ['Principal component {}'.format(i) for i in range(ncomponents)])
+                                       , columns = ['Dimension {}'.format(i) for i in range(ncomponents)])
             return principalDf
 
         elif(algorithm == 'IsoMAP'):
             manifold = Isomap(n_components=ncomponents, n_neighbors=n_neighbors)
             principalComponents = manifold.fit_transform(df_scaled_data)
             principalDf = pd.DataFrame(data = principalComponents
-                                       , columns = ['Principal component {}'.format(i) for i in range(ncomponents)])
+                                       , columns = ['Dimension {}'.format(i) for i in range(ncomponents)])
             return principalDf
 
         elif(algorithm == 'LLE'):
             manifold = LocallyLinearEmbedding(n_components=ncomponents)
             principalComponents = manifold.fit_transform(df_scaled_data)
             principalDf = pd.DataFrame(data = principalComponents
-                                       , columns = ['Principal component {}'.format(i) for i in range(ncomponents)])
+                                       , columns = ['Dimension {}'.format(i) for i in range(ncomponents)])
             return principalDf
 
         elif(algorithm == 'KPCA'):
             manifold = KernelPCA(n_components=ncomponents)
             principalComponents = manifold.fit_transform(df_scaled_data)
             principalDf = pd.DataFrame(data = principalComponents
-                                       , columns = ['Principal component {}'.format(i) for i in range(ncomponents)])
+                                       , columns = ['Dimension {}'.format(i) for i in range(ncomponents)])
             return principalDf
 
         elif(algorithm == 't-SNE'):
             manifold = TSNE(n_components=ncomponents, init='pca', random_state=0)
             principalComponents = manifold.fit_transform(df_scaled_data)
             principalDf = pd.DataFrame(data = principalComponents
-                                       , columns = ['Principal component {}'.format(i) for i in range(ncomponents)])
+                                       , columns = ['Dimension {}'.format(i) for i in range(ncomponents)])
             return principalDf
 
         elif(algorithm == 'UMAP'):
             manifold = PCA(n_components=ncomponents)
             principalComponents = manifold.fit_transform(df_scaled_data)
             principalDf = pd.DataFrame(data = principalComponents
-                                       , columns = ['Principal component {}'.format(i) for i in range(ncomponents)])
+                                       , columns = ['Dimension {}'.format(i) for i in range(ncomponents)])
             return principalDf
 
         else:
@@ -847,8 +878,9 @@ def create_hover(df, dims, hoverdata, hovercomponents, label):
         if(dims[i] is not None):
             hover[dims[i]]=hovercomponents
 
-    for component in hoverdata:
-        hover[component]=True
+    if(hoverdata is not None):
+        for component in hoverdata:
+            hover[component]=True
 
     if(label is not None):
         hover['label']=False
@@ -1024,7 +1056,7 @@ def update_max_dimensions(input_data, PCA_Ndim, MDS_Ndim, isomap_Ndim, KPCA_Ndim
                Output('dropdownDimension3','options'),
                Output('color_label','options'),
                Output('dropdownHoverData','options'),
-               Output('dropdownHoverData','value'),
+               #Output('dropdownHoverData','value'),
                Output('dropdown-variable','options')],
               [Input('Run_Button','n_clicks')],
               [State('filtered-data-storage','data'),
@@ -1066,7 +1098,7 @@ def update_output_div(run_click, input_data,complete_input_data, PCAncomponents,
             print(principalDf.head())
             options = [{'label': i, 'value': i} for i in principalDf.columns]
             options_c = [{'label': i, 'value': i} for i in dff_c.columns]
-            return principalDf.to_json(date_format='iso',orient = 'split'), options, options, options, options_c, options_c, dff_c.columns[:5], options_c
+            return principalDf.to_json(date_format='iso',orient = 'split'), options, options, options, options_c, options_c, options_c
         else:
             if(activeTab=='PCA'):
                 ncomponents = PCAncomponents
@@ -1085,13 +1117,13 @@ def update_output_div(run_click, input_data,complete_input_data, PCAncomponents,
             print(principalDf.head())
             options = [{'label': i, 'value': i} for i in principalDf.columns]
             options_c = [{'label': i, 'value': i} for i in df_c.columns]
-            return principalDf.to_json(date_format='iso', orient='split'), options, options, options, options_c, options_c, df_c.columns[:5], options_c
+            return principalDf.to_json(date_format='iso', orient='split'), options, options, options, options_c, options_c, options_c
     except:
         principalDf = apply_manifold(df, algorithm=activeTab, ncomponents=ncomponents, max_iter=300, n_neighbors=10, n_init=1)
         print(principalDf.head())
         options = [{'label': i, 'value': i} for i in principalDf.columns]
         options_c = [{'label': i, 'value': i} for i in df_c.columns]
-        return principalDf.to_json(date_format='iso', orient='split'), options, options, options, options_c,  options_c, df_c.columns[:5], options_c
+        return principalDf.to_json(date_format='iso', orient='split'), options, options, options, options_c, options_c, options_c
 
 @app.callback([Output('min-distance-slider','max'),
                Output('min-distance-slider','marks'),
@@ -1116,9 +1148,10 @@ def update_slider(input_data):
                Input('color_label','value'),
                Input('dropdownHoverData','value'),
                Input('min-distance-slider','value'),
-               Input('hover-components','value')],
+               Input('hover-components','value'),
+               Input('2D-slider','value')],
               [State('complete-data-storage','data')])
-def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, min_dist, hover_components, complete_input_data):
+def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, min_dist, hover_components, markers_size, complete_input_data):
     if input_data is not None:
 
         # Read manifold data and complete data set data
@@ -1140,8 +1173,9 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, m
         dff_c = dff_c[outliers]
 
         # Add the ID to identify the points and display histogram
-        hover_columns = hoverdata
-        hover_columns.append(dff_c.index)
+
+        #hover_columns = hoverdata
+        #hover_columns.append(dff_c.index)
 
         # Merge manifold and complete data
         dff_m= pd.merge(dff, dff_c, left_index=True, right_index=True)
@@ -1155,15 +1189,27 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, m
 
         #print(dff_m.columns)
         #print("Label",label)
+        data = None
 
-        hover = create_hover(dff,dims,hoverdata[:-1],hover_components,label)
-        #print(hover)
+        if(all(elem in list(dff_c.columns) for elem in hoverdata)):
+            data = hoverdata
+
+        hover = create_hover(dff,dims,data,hover_components,label)
 
         if(graph3d):
             if(dim1 is not None and dim2 is not None and dim3 is not None):
                 x = dff[dim1].values
                 y = dff[dim2].values
                 z = dff[dim3].values
+
+                print("Not sorted dataframe")
+                print(dff_m.head())
+
+                if(label is not None):
+                    print(label)
+                    dff_m = dff_m.sort_values(by=['label'])
+                    print("Sorted dataframe")
+                    print(dff_m.head())
 
                 fig = px.scatter_3d(dff_m, x=x, y=y, z=z, labels={'x':dim1,'y':dim2,'z':dim3} ,opacity=0.7,color=label, template='plotly', hover_data=hover)
                 fig.update_layout(
@@ -1213,7 +1259,7 @@ def update_graph(input_data, dim1, dim2,dim3, graph3d, color_label, hoverdata, m
 
                 fig.update_xaxes(showline=True, linewidth = 1, linecolor='black')
                 fig.update_yaxes(showline=True, linewidth = 1, linecolor='black')
-                fig.update_traces(marker=dict(size=25,
+                fig.update_traces(marker=dict(size=markers_size,
                                               line=dict(
                                                   color='White',
                                                   width=1
@@ -1391,6 +1437,17 @@ def update_download_link(manifold_data, raw_data):
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string
 
+@app.callback(Output('dropdownHoverData','value'),
+              [Input('fill_hover','n_clicks')],
+              [State('complete-data-storage','data')])
+def fill_hover(fill_click, complete_input_data):
+    values = []
+    if(complete_input_data is not None):
+        dff_c = pd.read_json(complete_input_data,orient='split')
+        values = dff_c.columns
+    return values
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)
+    
+
